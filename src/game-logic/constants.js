@@ -43,7 +43,7 @@ export const EQUIPMENT = {
   },
   GPS_TRACKER: {
     id: 'gps-tracker',
-    name: 'GPS Tracker', // [cite: 113]
+    name: 'GPS Tracker',
     cost: 500, // Represents hardware and 1-year service subscription
     description: 'Enables dynamic reaction to unforeseen events like traffic jams.',
   },
