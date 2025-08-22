@@ -5,7 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Serious Game - Last Mile</title>
-    <!-- The link to your stylesheet -->
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body class="bg-gray-200 font-sans">
@@ -13,16 +12,16 @@
     <!-- Main container for the application -->
     <div id="app" class="relative w-screen h-screen p-8 flex gap-8 justify-center items-center">
 
-      <!-- Left-side UI Panel (Layer 1) -->
+      <!-- Left-side UI Panel -->
       <div class="bg-white p-6 rounded-lg shadow-xl w-72 h-fit self-start z-10">
-        <h2 class="text-2xl font-bold mb-4 text-gray-800">Logistics Operations</h2>
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">Serious Game - Last Mile Prozess für ESG</h2>
         <div id="budget-display" class="text-3xl font-bold text-green-600 mb-2">
           Budget: $...
         </div>
-        <p class="text-sm text-gray-500">Ihr verfügbares Budget.</p>
+        <p class="text-sm text-gray-500">Ihr verfügbares Budget</p>
       </div>
 
-      <!-- Center Content: Map and Simulation Button (Layer 0) -->
+      <!-- Center Content: Map and Simulation Button -->
       <div class="flex flex-col gap-4 items-center">
         <canvas id="game-canvas" width="800" height="600" class="bg-white rounded-lg shadow-xl"></canvas>
         <button id="simulate-button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
@@ -30,7 +29,7 @@
         </button>
       </div>
 
-      <!-- Decision Pop-up (Layer 2 - z-20) -->
+      <!-- Decision Pop-up -->
       <div id="decision-popup" class="absolute inset-0 bg-black bg-opacity-60 flex justify-center items-center z-20">
         <div class="bg-white p-10 rounded-lg shadow-2xl text-center w-full max-w-4xl mx-4">
           <h2 class="text-3xl font-bold mb-8 text-gray-800">Fahrzeugauswahl</h2>
@@ -38,7 +37,7 @@
         </div>
       </div>
 
-      <!-- ESG Report Dashboard (Layer 3 - z-30, HIGHEST LAYER) -->
+      <!-- ESG Report Dashboard -->
       <div id="esg-dashboard" class="hidden absolute inset-0 bg-black bg-opacity-70 flex justify-center items-center z-30">
           <div class="bg-gray-50 rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all" style="background-color: #F9FAFB; padding: 3rem;">
               <h2 class="text-3xl font-bold mb-6 text-center text-gray-900">ESG-Bericht</h2>
@@ -81,11 +80,11 @@
                       </h3>
                       <div class="flex justify-between items-center text-lg">
                           <span class="text-gray-600">Kosten diese Runde:</span>
-                          <span class="font-mono font-bold text-xl text-red-600">$<span id="report-cost">...</span></span>
+                          <span class="font-mono font-bold text-xl text-red-600"><span id="report-cost">...</span> €</span>
                       </div>
                       <div class="flex justify-between items-center text-lg mt-2">
                           <span class="text-gray-600">Restbudget:</span>
-                          <span class="font-mono font-bold text-xl text-green-600">$<span id="report-final-budget">...</span></span>
+                          <span class="font-mono font-bold text-xl text-green-600"><span id="report-final-budget">...</span> €</span>
                       </div>
                   </div>
               </div>
@@ -98,7 +97,6 @@
       </div>
 
     </div>
-    <!-- The script that runs your application -->
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

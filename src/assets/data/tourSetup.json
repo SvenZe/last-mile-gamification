@@ -8,35 +8,35 @@
   "deliveryPoints": [
     {
       "id": "addr1",
-      "name": "Address 1",
+      "name": "Addresse 1",
       "x": 400,
       "y": 100,
       "timeWindow": "09:00-11:00"
     },
     {
       "id": "addr2",
-      "name": "Address 2",
+      "name": "Addresse 2",
       "x": 650,
       "y": 250,
       "timeWindow": "09:00-11:00"
     },
     {
       "id": "addr3",
-      "name": "Address 3",
+      "name": "Addresse 3",
       "x": 550,
       "y": 450,
       "timeWindow": "12:00-14:00"
     },
     {
       "id": "addr4",
-      "name": "Address 4",
+      "name": "Addresse 4",
       "x": 250,
       "y": 450,
       "timeWindow": "12:00-14:00"
     },
     {
       "id": "addr5",
-      "name": "Address 5",
+      "name": "Addresse 5",
       "x": 150,
       "y": 250,
       "timeWindow": "10:00-12:00"
