@@ -4,16 +4,15 @@
 function calculateDistance(p1, p2) {
     const dx = p1.x - p2.x;
     const dy = p1.y - p2.y;
-    // Note: This is a simplified distance. In a real app, you'd use a mapping API.
-    // For our game, we'll scale it to be more realistic. 1 pixel = 0.1 km
-    return Math.sqrt(dx * dx + dy * dy) * 0.1;
+    // Simplified distance --> 1 pixel = 0.01 km
+    return Math.sqrt(dx * dx + dy * dy) * 0.01;
 }
 
 /**
- * Runs the tour simulation based on the planned route and vehicle.
- * @param {Array<string>} plannedRoute - Array of delivery point IDs.
- * @param {object} tourData - The full tour data including depot and delivery points.
- * @returns {number} The total distance of the tour in km.
+ * Runs the tour simulation based on the planned route and vehicle
+ * @param {Array<string>} plannedRoute - Array of delivery point IDs
+ * @param {object} tourData - The full tour data including depot and delivery points
+ * @returns {number} The total distance of the tour in km
  */
 export function runSimulation(plannedRoute, tourData) {
     let totalDistance = 0;

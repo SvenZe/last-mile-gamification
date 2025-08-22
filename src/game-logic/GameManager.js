@@ -2,12 +2,11 @@
 import { STARTING_BUDGET, VEHICLES, AVG_SPEED_KMPH } from './constants.js';
 import { updateBudgetDisplay } from '../components/BudgetDisplay.js';
 import { hideDecisionPopup } from '../components/DecisionPopup.js';
-// ⬇️ CORRECTED FILENAME
 import { runSimulation } from './TourSimulation.js'; 
 import { showESGDashboard } from '../components/ESGDashboard.js';
 
 const listeners = [];
-let tourData = null; // To store our map data
+let tourData = null;
 
 export function subscribe(callback) {
   listeners.push(callback);
@@ -21,7 +20,7 @@ const gameState = {
   budget: STARTING_BUDGET,
   selectedVehicle: null,
   plannedRoute: [],
-  currentPhase: 'decision', // 'decision', 'planning', 'simulation', 'report'
+  currentPhase: 'decision',
 };
 
 export function initGameManager() {
