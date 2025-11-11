@@ -1,8 +1,8 @@
 // src/game-logic/GameManager.js
-import { STARTING_BUDGET, VEHICLES, AVG_SPEED_KMPH } from './constants.js';
+import { STARTING_BUDGET, VEHICLES, AVG_SPEED_KMPH } from '../data/constants.js';
 import { updateBudgetDisplay } from '../components/BudgetDisplay.js';
 import { hideDecisionPopup } from '../components/DecisionPopup.js';
-import { runSimulation } from './TourSimulation.js'; 
+import { runSimulation } from './Simulator.js'; 
 import { showESGDashboard } from '../components/ESGDashboard.js';
 
 const listeners = [];

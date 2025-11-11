@@ -1,6 +1,6 @@
 // src/components/DecisionPopup.js
-import { VEHICLES } from '../game-logic/constants.js';
-import { selectVehicle } from '../game-logic/GameManager.js';
+import { VEHICLES } from '../data/constants.js';
+import { selectVehicle } from '../game/GameManager.js';
 
 export function initDecisionPopup() {
   console.log('[DecisionPopup.js] 4. initDecisionPopup() called.');
