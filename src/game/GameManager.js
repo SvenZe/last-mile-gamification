@@ -1,12 +1,13 @@
-// src/game-logic/GameManager.js
+// src/game/GameManager.js
 import { STARTING_BUDGET, VEHICLES, AVG_SPEED_KMPH } from '../data/constants.js';
+import tourData from '../data/tourSetup.json';
 import { updateBudgetDisplay } from '../components/BudgetDisplay.js';
 import { hideDecisionPopup } from '../components/DecisionPopup.js';
 import { runSimulation } from './Simulator.js'; 
 import { showESGDashboard } from '../components/ESGDashboard.js';
 
 const listeners = [];
-let tourData = null;
+// tourData now statically imported from JSON
 
 export function subscribe(callback) {
   listeners.push(callback);
@@ -26,13 +27,7 @@ const gameState = {
 export function initGameManager() {
   console.log('[GameManager.js] 3. initGameManager() called.');
   updateBudgetDisplay(gameState.budget);
-  // Fetch tour data for the simulator
-  fetch('/src/assets/data/tourSetup.json')
-    .then(res => res.json())
-    .then(data => {
-        tourData = data;
-        console.log('[GameManager.js] Tour data loaded.');
-    });
+  console.log('[GameManager.js] Tour data loaded (static import).');
 }
 
 export function addPointToRoute(pointId) {

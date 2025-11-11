@@ -1,9 +1,10 @@
 // src/map/MapView.js
-import { getGameState, subscribe, addPointToRoute } from '../game-logic/GameManager.js';
+import { getGameState, subscribe, addPointToRoute } from '../game/GameManager.js';
+import tourData from '../data/tourSetup.json';
 
 let canvas = null;
 let ctx = null;
-let tourData = null;
+// tourData is now statically imported from JSON via Vite
 
 function getMousePos(canvasEl, evt) {
   const rect = canvasEl.getBoundingClientRect();
@@ -73,13 +74,7 @@ export async function initMapView() {
   console.log('[MapView.js]   - Canvas element found.');
 
   try {
-    const response = await fetch('/src/assets/data/tourSetup.json');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    tourData = await response.json();
-    
     subscribe(renderMap);
-
     renderMap();
 
     canvas.addEventListener('click', (event) => {
@@ -93,8 +88,7 @@ export async function initMapView() {
         }
       }
     });
-
   } catch (error) {
-    console.error("[MapView.js] Could not load or render the map:", error);
+    console.error('[MapView.js] Could not render the map:', error);
   }
 }
