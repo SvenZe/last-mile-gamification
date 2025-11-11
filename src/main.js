@@ -2,7 +2,7 @@
 import './style.css';
 
 import { initMapView } from './map/MapView.js';
-import { initGameManager, simulateTour } from './game-logic/GameManager.js';
+import { initGameManager, simulateTour } from './game/GameManager.js';
 import { initDecisionPopup } from './components/DecisionPopup.js';
 
 function startApp() {
