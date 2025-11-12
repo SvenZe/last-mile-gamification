@@ -1,0 +1,12 @@
+{
+  "level3": {
+    "deliveryRate": 0.85,
+    "totalDistance": 27,
+    "totalCost": 291.60,
+    "co2Emissions": 6.534,
+    "numberOfStops": 18,
+    "costPerKm": 10.8,
+    "costPerStop": 16.2,
+    "costPerSuccessfulDelivery": 19.11
+  }
+}

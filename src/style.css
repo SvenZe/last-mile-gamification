@@ -1,3 +1,278 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Base Styles */
+body { 
+  margin: 0; 
+  font-family: system-ui, Arial, sans-serif; 
+  background: #0f172a; 
+  color: #f3f4f6; 
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+}
+
+.panel { 
+  background: #fff; 
+  color: #1f2937; 
+  border-radius: 12px; 
+  padding: 24px; 
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.button { 
+  display: inline-block; 
+  margin: 8px 4px; 
+  padding: 12px 24px; 
+  border-radius: 8px; 
+  border: none; 
+  background: #2563eb; 
+  color: #fff; 
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.button:hover:not(:disabled) { 
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.button:disabled { 
+  background: #94a3b8; 
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button.primary {
+  background: #2563eb;
+}
+
+.button.secondary {
+  background: #64748b;
+}
+
+.button.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.button.secondary:hover:not(:disabled) {
+  background: #475569;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Story Text */
+.story-text {
+  margin: 20px 0;
+  line-height: 1.8;
+}
+
+.story-text p {
+  margin-bottom: 16px;
+}
+
+.story-text strong {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.baseline-box {
+  background: #f1f5f9;
+  border-left: 4px solid #2563eb;
+  padding: 16px;
+  margin: 20px 0;
+  border-radius: 6px;
+}
+
+.baseline-box h4 {
+  margin-top: 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.baseline-box ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.baseline-box li {
+  margin: 6px 0;
+}
+
+/* Map */
+.map-canvas { 
+  border: 2px solid #334155; 
+  width: 960px; 
+  height: 640px; 
+  margin: 16px auto;
+  border-radius: 8px;
+  display: block;
+}
+
+/* Report Styles */
+.report { 
+  display: flex; 
+  flex-direction: column; 
+  font-size: 0.95rem; 
+}
+
+.report-title { 
+  font-size: 1.5rem; 
+  margin-bottom: 20px; 
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.report-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.report-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.report-row { 
+  display: flex; 
+  justify-content: space-between; 
+  margin-bottom: 8px;
+  padding: 6px 0;
+  align-items: center;
+}
+
+.report-row.points {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
+  font-weight: 600;
+}
+
+.report-row.warning {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.report-total {
+  background: #1e293b;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.report-total .report-row {
+  font-size: 1.2rem;
+}
+
+/* Delta Indicators */
+.delta {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.delta.positive {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.delta.negative {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.delta.neutral {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+/* Success/Warning Messages */
+.success-message {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid #86efac;
+}
+
+.warning-message {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid #fde047;
+}
+
+.report-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.report-info p {
+  margin: 8px 0;
+}
+
+.report-info .tip {
+  color: #1e40af;
+  font-weight: 500;
+}
+
+/* Points Display */
+.positive {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.negative {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.success {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.warning {
+  color: #92400e;
+  font-weight: 700;
+}
