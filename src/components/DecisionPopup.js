@@ -3,14 +3,11 @@ import { VEHICLES } from '../data/constants.js';
 import { selectVehicle } from '../game/GameManager.js';
 
 export function initDecisionPopup() {
-  console.log('[DecisionPopup.js] 4. initDecisionPopup() called.');
   const choicesContainer = document.getElementById('vehicle-choices');
   
   if (!choicesContainer) {
-    console.error('[DecisionPopup.js] FATAL ERROR: vehicle-choices element NOT found in DOM.');
     return;
   }
-  console.log('[DecisionPopup.js]   - vehicle-choices element found.');
 
   choicesContainer.innerHTML = ''; 
 
@@ -34,11 +31,8 @@ export function initDecisionPopup() {
 }
 
 export function hideDecisionPopup() {
-  console.log('[DecisionPopup.js] Hiding decision pop-up...');
   const popupElement = document.getElementById('decision-popup');
   if (popupElement) {
     popupElement.classList.add('hidden');
-  } else {
-    console.error('[DecisionPopup.js] ERROR: decision-popup element not found when trying to hide.');
   }
 }

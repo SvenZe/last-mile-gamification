@@ -1,102 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Serious Game - Last Mile</title>
-  <link rel="stylesheet" href="/src/style.css" />
+    <title>Tourenplaner – Lernstufe 3</title>
   </head>
-  <body class="bg-gray-200 font-sans">
-
-    <!-- Main container for the application -->
-    <div id="app" class="relative w-screen h-screen p-8 flex gap-8 justify-center items-center">
-
-      <!-- Left-side UI Panel -->
-      <div class="bg-white p-6 rounded-lg shadow-xl w-72 h-fit self-start z-10">
-        <h2 class="text-2xl font-bold mb-4 text-gray-800">Serious Game - Last Mile Prozess für ESG</h2>
-        <div id="budget-display" class="text-3xl font-bold text-green-600 mb-2">
-          Budget: $...
-        </div>
-        <p class="text-sm text-gray-500">Ihr verfügbares Budget</p>
-      </div>
-
-      <!-- Center Content: Map and Simulation Button -->
-      <div class="flex flex-col gap-4 items-center">
-        <canvas id="game-canvas" width="800" height="600" class="bg-white rounded-lg shadow-xl"></canvas>
-        <button id="simulate-button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-          Tour simulieren
-        </button>
-      </div>
-
-      <!-- Decision Pop-up -->
-      <div id="decision-popup" class="absolute inset-0 bg-black bg-opacity-60 flex justify-center items-center z-20">
-        <div class="bg-white p-10 rounded-lg shadow-2xl text-center w-full max-w-4xl mx-4">
-          <h2 class="text-3xl font-bold mb-8 text-gray-800">Fahrzeugauswahl</h2>
-          <div id="vehicle-choices" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-        </div>
-      </div>
-
-      <!-- ESG Report Dashboard -->
-      <div id="esg-dashboard" class="hidden absolute inset-0 bg-black bg-opacity-70 flex justify-center items-center z-30">
-          <div class="bg-gray-50 rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all" style="background-color: #F9FAFB; padding: 3rem;">
-              <h2 class="text-3xl font-bold mb-6 text-center text-gray-900">ESG-Bericht</h2>
-              <div class="space-y-6">
-                  <!-- Environmental Section -->
-                  <div class="bg-white rounded-lg border border-gray-300 shadow-sm" style="padding: 2.5rem;">
-                      <h3 class="font-bold text-xl text-green-700 mb-4 flex items-center gap-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 7.343A8 8 0 0118.657 17.657c-1.577 1.577-2.343 3-7.343 3C7 22 6.343 20.657 6.343 18.657z" /></svg>
-                          Environmental
-                      </h3>
-                      <div class="flex justify-between items-center text-lg">
-                          <span class="text-gray-600">CO₂-Emissionen:</span>
-                          <span class="font-mono font-bold text-xl text-gray-800"><span id="report-co2">...</span> kg</span>
-                      </div>
-                      <div class="flex justify-between items-center text-lg mt-2">
-                          <span class="text-gray-600">Distanz:</span>
-                          <span class="font-mono font-bold text-xl text-gray-800"><span id="report-distance">...</span> km</span>
-                      </div>
-                  </div>
-                  <!-- Social Section -->
-                  <div class="bg-white rounded-lg border border-gray-300 shadow-sm" style="padding: 2.5rem;">
-                      <h3 class="font-bold text-xl text-blue-700 mb-4 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-5.197-5.975M15 21H3v-1a6 6 0 0112 0v1z" /></svg>
-                          Social
-                      </h3>
-                      <div class="flex justify-between items-center text-lg">
-                          <span class="text-gray-600">Tour-Dauer:</span>
-                          <span class="font-mono font-bold text-xl text-gray-800"><span id="report-duration">...</span> Stunden</span>
-                      </div>
-                      <div class="flex justify-between items-center text-lg mt-2">
-                          <span class="text-gray-600">Pünktlichkeit:</span>
-                          <span class="font-mono font-bold text-xl text-gray-800"><span id="report-punctuality">...</span> %</span>
-                      </div>
-                  </div>
-                  <!-- Governance Section -->
-                  <div class="bg-white rounded-lg border border-gray-300 shadow-sm" style="padding: 2.5rem;">
-                      <h3 class="font-bold text-xl text-yellow-700 mb-4 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          Governance (Financial)
-                      </h3>
-                      <div class="flex justify-between items-center text-lg">
-                          <span class="text-gray-600">Kosten diese Runde:</span>
-                          <span class="font-mono font-bold text-xl text-red-600"><span id="report-cost">...</span> €</span>
-                      </div>
-                      <div class="flex justify-between items-center text-lg mt-2">
-                          <span class="text-gray-600">Restbudget:</span>
-                          <span class="font-mono font-bold text-xl text-green-600"><span id="report-final-budget">...</span> €</span>
-                      </div>
-                  </div>
-              </div>
-              <div class="text-center mt-8">
-                  <button id="restart-button" class="bg-gray-800 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-900 transition-transform transform hover:scale-105">
-                      Neue Tour planen
-                  </button>
-              </div>
-          </div>
-      </div>
-
-    </div>
-    <script type="module" src="/src/main.js"></script>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

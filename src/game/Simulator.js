@@ -35,6 +35,5 @@ export function runSimulation(plannedRoute, tourData) {
     // Calculate distance from the last point back to the depot
     totalDistance += calculateDistance(lastPoint, tourData.depot);
 
-    console.log(`[TourSimulator] Simulation complete. Total distance: ${totalDistance.toFixed(2)} km`);
     return totalDistance;
 }
