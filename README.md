@@ -1,134 +1,97 @@
-# Last-Mile Gamification - Lernstufe 3
+# Last-Mile Gamification – Lernstufe 3
 
-Ein interaktives Serious Game für die Tourenplanung in der Last-Mile-Logistik mit ESG-Bewertung (Ökologie, Ökonomie, Soziales).
+Ein interaktives Lernspiel für Tourenplanung in der letzten Meile. Studenten können hier selbst Hand anlegen oder schauen, wie Algorithmen das Problem lösen – und am Ende gibt's eine ESG-Bewertung nach ökologischen, ökonomischen und sozialen Kriterien.
 
-## 🚀 Quick Start
+## Los geht's
 
 ### Installation
 ```bash
 npm install
 ```
 
-### Development Server starten
+### Entwicklungsserver
 ```bash
 npm run dev
 ```
-Der Dev-Server startet auf `http://localhost:5173` (oder einem anderen verfügbaren Port).
+Läuft dann auf `http://localhost:5173` (oder einem anderen freien Port).
 
-### Build für Produktion
+### Production Build
 ```bash
-npm build
+npm run build
 ```
 
-## 📁 Projektstruktur
+## Wie es funktioniert
+
+Das Spiel simuliert einen typischen Tag in der Paketzustellung. 18 Kunden warten auf ihre Lieferung, und du musst entscheiden: Planst du die Route selbst oder vertraust du auf einen Algorithmus?
+
+### Spielablauf
+1. **Story**: Kurze Einführung ins Szenario – Baustellen in der Stadt, Zeitdruck, die üblichen Logistik-Probleme eben
+2. **Fahrzeugwahl**: Diesel-Transporter, E-Auto oder doch lieber Lastenrad?
+3. **Planungsmodus**:
+   - **Manuell**: Du klickst dich durch die Straßen und baust deine Route Kante für Kante
+   - **Automatisch**: Der Computer rechnet dir was aus (Nearest Insertion + 2-Opt)
+4. **Simulation**: Deine Route wird durchgespielt – Kilometer, Kosten, CO₂, Zustellquote
+5. **Ergebnis**: ESG-Score zeigt, wie gut du warst (oder wie gut der Algorithmus war)
+
+## Was macht das Spiel interessant?
+
+- **Echte Baustellen**: 4 Straßen sind gesperrt – das bedeutet Umwege und Verzögerungen
+- **ESG-Bewertung**: Nicht nur Kosten zählen, auch Umwelt (40%) und Kundenservice (25%)
+- **Vergleich Mensch vs. Maschine**: Kannst du den Algorithmus schlagen?
+- **Rückgängig-Button**: Fehler passieren – einfach einen Schritt zurück
+
+## Projektstruktur
 
 ```
-last-mile-gamification/
-├── src/
-│   ├── components/          # UI-Komponenten
-│   │   ├── BudgetDisplay.js
-│   │   ├── DecisionPopup.js
-│   │   ├── ESGDashboard.jsx
-│   │   ├── ModeSelector.jsx
-│   │   ├── SimulationButton.js
-│   │   ├── ToastMessage.js
-│   │   └── VehicleSelector.jsx
-│   ├── map/                 # Karten-Rendering
-│   │   ├── MapRender.js
-│   │   └── MapView.jsx
-│   ├── game/                # Spiellogik & Algorithmen
-│   │   ├── GameManager.js
-│   │   ├── ScoreCaluclator.js
-│   │   └── Simulator.js
-│   ├── algorithms/          # Optimierungsalgorithmen
-│   │   ├── applyRouteContstraints.js
-│   │   ├── distance.js
-│   │   ├── nearestInsertion.js
-│   │   ├── nearestNeighbor.js
-│   │   └── twoOpt.js
-│   ├── data/                # Daten & Konfiguration
-│   │   ├── baselineMetrics.json
-│   │   ├── constants.js
-│   │   ├── equipment.json
-│   │   ├── tourSetup.json   # Straßennetz (54 Knoten, 134 Kanten)
-│   │   └── vehicles.js
-│   ├── state/               # State Management
-│   │   ├── EventBus.js
-│   │   ├── GameState.js
-│   │   └── PhaseController.js
-│   ├── utils/               # Hilfsfunktionen
-│   │   ├── formatMoney.js
-│   │   ├── formatTime.js
-│   │   ├── mathHelpers.js
-│   │   └── randomSpeed.js
-│   ├── App.jsx              # Hauptkomponente
-│   ├── main.jsx             # Entry Point
-│   └── style.css            # Globale Styles
-├── scripts/
-│   └── buildTourSetup.cjs   # Tour-Generator Script
-├── index.html               # HTML Entry
-├── package.json
-├── vite.config.js           # Vite Konfiguration
-├── tailwind.config.cjs      # Tailwind CSS Konfiguration
-└── postcss.config.cjs       # PostCSS Konfiguration
+src/
+├── algorithms/         # Routing-Algorithmen (Nearest Insertion, 2-Opt)
+├── components/         # UI-Bausteine (Fahrzeugwahl, ESG-Dashboard, etc.)
+├── map/               # Canvas-basierte Karten-Darstellung
+├── game/              # Spiellogik und Simulation
+├── data/              # Straßennetz, Fahrzeuge, Baseline-Metriken
+├── App.jsx            # Hauptkomponente mit Phasen-Steuerung
+└── main.jsx           # Einstiegspunkt
 ```
 
-## 🎮 Spielmechanik
+## Technische Details
 
-### Lernstufe 3: Technologische Unterstützung bei der Planung
+Das Spiel läuft komplett im Browser, kein Backend nötig. Die Karte wird mit Canvas gerendert (schneller als SVG bei vielen Objekten). Das Straßennetz ist ein einfaches Gitter mit 54 Kreuzungen und 134 Verbindungen – realitätsnah genug für's Lernen, aber nicht so komplex dass es unübersichtlich wird.
 
-**Ziel:** Optimale Tourenplanung mit ESG-Kriterien (Ökologie 40%, Ökonomie 35%, Soziales 25%)
+### Algorithmen
 
-**Modi:**
-- **Manuell:** Selbst Kanten auswählen und Route planen
-- **Automatisch:** Algorithmus übernimmt die Tourenplanung
+- **Nearest Insertion**: Baut die Tour schrittweise auf, indem immer die nächste Adresse an der besten Stelle eingefügt wird
+- **2-Opt**: Optimiert die Tour nachträglich durch edge-swapping – probiert verschiedene Varianten durch bis nichts mehr besser wird
 
-**Features:**
-- 54 Kreuzungen, 134 Straßenverbindungen (orthogonal)
-- 18 Lieferadressen zufällig verteilt
-- Fahrzeugauswahl (Diesel, Elektro, Cargo-Bike)
-- Ausrüstung (Geräte, Ladehilfen)
-- Baustellen-Simulation (3 blockierte Straßen)
-- Echtzeit ESG-Bewertung
+### ESG-Berechnung
 
-## 🛠️ Technologie-Stack
+Die Bewertung vergleicht deine Route mit einem Baseline-Szenario:
+- **Umwelt (40%)**: CO₂-Emissionen im Verhältnis zur Distanz
+- **Ökonomie (35%)**: Gesamtkosten (Fix + variabel)
+- **Soziales (25%)**: Zustellquote (werden alle Kunden rechtzeitig beliefert?)
 
-- **Framework:** React 19.2.0
-- **Build Tool:** Vite 7.2.2
-- **Styling:** Tailwind CSS 4.1.11
-- **Rendering:** Canvas API (Custom Map Rendering)
+Baustellen reduzieren die Zustellquote um ca. 8% pro Baustelle, weil Zeitfenster nicht eingehalten werden können.
 
-## 📊 ESG-Bewertung
+## Tech-Stack
 
-- **Ökologie (40%):** CO₂-Emissionen, Energieverbrauch
-- **Ökonomie (35%):** Kosten, Effizienz
-- **Soziales (25%):** Lärmbelastung, Arbeitsbedingungen
+- React 19.2 (weil's einfach ist und schnell läuft)
+- Vite 7.2 (super schneller Build-Tool)
+- Tailwind CSS 4.1 (für schnelles Styling)
+- Vanilla Canvas (für die Karte)
 
-## 📝 Scripts
+## Entwicklung
 
-```bash
-npm run dev           # Dev-Server starten
-npm run build         # Production Build
-npm run preview       # Production Preview
-npm run build:tour    # Straßennetz neu generieren
-```
+Das Projekt nutzt Hot Module Replacement – Änderungen im Code werden sofort sichtbar ohne Reload. Die Algorithmen sind in `src/algorithms/` ausgelagert und gut kommentiert, falls man mal nachschauen will wie sowas funktioniert.
 
-## 🎯 Game Design Dokument (GDD)
+### Tipps zum Code
+- `App.jsx` steuert die Spielphasen und verwaltet den State
+- `MapView.jsx` zeichnet alles und kümmert sich um Klicks
+- `GameManager.js` führt die Simulation durch und rechnet ESG-Scores aus
+- Die Algorithmen sind bewusst einfach gehalten (kein fancy Dijkstra oder so), damit man sie nachvollziehen kann
 
-Basierend auf:
-- **Rehfeld 2020:** Strukturiertes Game Design
-- **Fünf-Ebenen-Modell nach Gimpel 2017:** Lernzielerreichung durch Gamification
+## Lizenz & Verwendung
 
-## 🐛 Bekannte Einschränkungen
+Das Projekt ist für Lehrzwecke gedacht. Wer's im Unterricht einsetzen will: gerne! Feedback ist immer willkommen.
 
-- Nur Lernstufe 3 implementiert (6 weitere Stufen geplant)
-- Straßennetz ist statisch (tourSetup.json)
-- Keine Persistenz (kein Backend)
+---
 
-## 📄 Lizenz
-
-ISC License
-
-## 👥 Kontakt
-
-Repository: [github.com/SvenZe/last-mile-gamification](https://github.com/SvenZe/last-mile-gamification)
+_Hinweis: Das ist aktuell nur Lernstufe 3. Weitere Stufen mit zusätzlichen Herausforderungen sind geplant, aber noch nicht implementiert._
