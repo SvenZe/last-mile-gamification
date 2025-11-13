@@ -1,15 +1,6 @@
 import tourSetup from '../data/tourSetup.json'
 import { calculateDistance } from '../algorithms/distance.js'
-import { nearestInsertion as nearestInsertionAlgorithm } from '../algorithms/nearestInsertion.js'
-import { twoOpt as twoOptAlgorithm } from '../algorithms/twoOpt.js'
 import { replaceBlockedEdges } from '../algorithms/pathfinding.js'
-
-/**
- * Re-export routing algorithms for backward compatibility.
- * These are now implemented in the algorithms/ folder.
- */
-export const nearestInsertion = nearestInsertionAlgorithm
-export const twoOpt = twoOptAlgorithm
 
 /**
  * Simulates a delivery tour and calculates performance metrics.

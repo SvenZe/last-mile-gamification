@@ -249,13 +249,6 @@ export default function App() {
     console.log('\n🚀 Generating optimal route...')
     console.log('─'.repeat(50))
     
-    // Run network analysis ONCE to understand constraints
-    if (!window._networkAnalysisRun) {
-      const { analyzeNetworkConstraints } = await import('./algorithms/networkAnalysis.js')
-      analyzeNetworkConstraints()
-      window._networkAnalysisRun = true
-    }
-    
     try {
       // Phase 1: Build initial route candidates
       console.log('\n📊 Phase 1: Building initial candidates')
