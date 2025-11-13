@@ -4,6 +4,7 @@ import baselineMetrics from './data/baselineMetrics.json'
 import { vehicles } from './data/vehicles.js'
 import MapView from './map/MapView.jsx'
 import { nearestInsertion, twoOpt, simulateRoute } from './game/GameManager.js'
+import { findDetour } from './algorithms/pathfinding.js'
 import VehicleSelector from './components/VehicleSelector.jsx'
 import ModeSelector from './components/ModeSelector.jsx'
 import ESGDashboard from './components/ESGDashboard.jsx'
@@ -36,6 +37,7 @@ export default function App() {
   const [visitedAddresses, setVisitedAddresses] = useState(new Set())
   const [currentEndNode, setCurrentEndNode] = useState(null)
   const [selectionMessage, setSelectionMessage] = useState(null)
+  const [plannedRoute, setPlannedRoute] = useState([])  // The route player planned (may contain blocked edges)
   
   // Simulation results
   const [report, setReport] = useState(null)
@@ -116,9 +118,6 @@ export default function App() {
   function handleEdgeSelect(edge) {
     if (mode !== 'manual') return
     if (!depotId) return
-    if (edge.blocked) {
-      setSelectionMessage('⚠️ Diese Straße ist gesperrt! Sie können sie trotzdem wählen, aber es wird Verzögerungen geben.')
-    }
 
     if (manualEdges.length === 0) {
       // Erste Kante: muss am Depot (oder überlappendem Startknoten) liegen
@@ -143,9 +142,7 @@ export default function App() {
       setSelectedEdgeIds([edge.id])
       setVisitedAddresses(newVisited)
       setCurrentEndNode(newPrimary)
-      if (!edge.blocked) {
-        setSelectionMessage(null)
-      }
+      setSelectionMessage(null)
     } else {
       const currentCluster = getCluster(currentEndNode)
 
@@ -187,9 +184,7 @@ export default function App() {
       setSelectedEdgeIds(newSelectedIds)
       setVisitedAddresses(newVisited)
       setCurrentEndNode(newPrimary)
-      if (!edge.blocked) {
-        setSelectionMessage(null)
-      }
+      setSelectionMessage(null)
     }
   }  function undoLastEdge() {
     if (manualEdges.length === 0) return
@@ -258,19 +253,41 @@ export default function App() {
       const seq = twoOpt(nearestInsertion(tourSetup))
       edgesForSim = []
       let last = depotId
+      
       seq.forEach(addrId => {
-        const e = tourSetup.edges.find(ed =>
+        // Try to find a direct edge first
+        const directEdge = tourSetup.edges.find(ed =>
           (ed.a === last && ed.b === addrId) || (ed.b === last && ed.a === addrId))
-        if (e) edgesForSim.push(e)
+        
+        if (directEdge) {
+          edgesForSim.push(directEdge)
+        } else {
+          // No direct edge - find path through junctions
+          const path = findDetour(last, addrId, new Set())
+          if (path && path.length > 0) {
+            edgesForSim.push(...path)
+          }
+        }
         last = addrId
       })
-      const back = tourSetup.edges.find(ed =>
+      
+      // Return to depot
+      const backEdge = tourSetup.edges.find(ed =>
         (ed.a === last && ed.b === depotId) || (ed.b === last && ed.a === depotId))
-      if (back) edgesForSim.push(back)
+      if (backEdge) {
+        edgesForSim.push(backEdge)
+      } else {
+        const returnPath = findDetour(last, depotId, new Set())
+        if (returnPath && returnPath.length > 0) {
+          edgesForSim.push(...returnPath)
+        }
+      }
+      
       setSelectedEdgeIds(edgesForSim.map(e => e.id))  // Array statt Set
     }
 
     const res = simulateRoute(edgesForSim, vehicle, tourSetup, baseline)
+    setPlannedRoute(edgesForSim)  // Save the planned route before simulation
     setReport(res)
     setPhase('report')
   }
@@ -420,6 +437,44 @@ export default function App() {
       {phase === 'report' && report && (
         <div className="panel">
           <ESGDashboard baseline={baseline} results={report} />
+          
+          <div className="report-section" style={{ marginTop: '24px' }}>
+            <h4>Ihre geplante Route</h4>
+            <div style={{ 
+              display: 'flex', 
+              gap: '16px', 
+              marginBottom: '12px', 
+              padding: '12px',
+              background: '#f8fafc',
+              borderRadius: '6px',
+              fontSize: '13px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '20px', height: '4px', background: '#3b82f6' }}></div>
+                <span>Geplante Route</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '20px', height: '3px', background: '#dc2626', borderTop: '3px dashed #dc2626' }}></div>
+                <span>Baustelle</span>
+              </div>
+              {report.detours && report.detours.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '20px', height: '4px', background: '#f59e0b' }}></div>
+                  <span>Umfahrung</span>
+                </div>
+              )}
+            </div>
+            <MapView
+              tourData={tourSetup}
+              mode="view"
+              selectedEdgeIds={selectedEdgeIds}
+              visitedAddresses={new Set()}
+              currentNode={null}
+              onSelectEdge={() => {}}
+              detours={report.detours || []}
+            />
+          </div>
+          
           <div className="button-group">
             <button className="button secondary" onClick={() => window.location.reload()}>Neu starten</button>
             {report.passed && (
