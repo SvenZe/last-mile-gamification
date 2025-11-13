@@ -1,24 +1,18 @@
 import tourSetup from '../data/tourSetup.json'
 import { calculateDistance } from './distance.js'
+import { calculateNetworkDistance } from './networkDistance.js'
 
 /**
- * Implements the 2-opt local search algorithm to improve a tour.
+ * 2-opt local search - a simple but effective way to improve tours.
  * 
- * 2-opt is a classic tour improvement method that works by removing two edges
- * from the tour and reconnecting them in a different way. If this reduces the
- * total distance, we keep the change and continue searching for improvements.
+ * The idea: take two edges in the tour and try reconnecting them differently.
+ * If reversing the segment between them makes the tour shorter, keep it.
+ * Keep doing this until no more improvements can be found.
  * 
- * The algorithm:
- * 1. Start with an initial tour
- * 2. Try all possible pairs of edges
- * 3. For each pair, reverse the segment between them
- * 4. If this makes the tour shorter, keep the change
- * 5. Repeat until no more improvements can be found
+ * This won't always find the absolute best solution, but it usually gets
+ * pretty close and runs fast. Good for polishing routes from other algorithms.
  * 
- * This is a local optimization - it won't always find the global optimum,
- * but it usually improves the tour quality significantly.
- * 
- * @param {Array<string>} initialRoute - Initial tour (list of address IDs)
+ * @param {Array<string>} initialRoute - Starting tour
  * @returns {Array<string>} Improved tour
  */
 export function twoOpt(initialRoute) {
@@ -27,25 +21,23 @@ export function twoOpt(initialRoute) {
   
   const depotId = tourSetup.nodes.find(n => n.type === 'depot').id
 
-  /**
-   * Helper function to calculate total tour length including depot
-   */
+  // Calculate tour length using actual road network distances
   const calculateTourLength = (route) => {
-    let totalDistance = calculateDistance(
-      nodesById[depotId],
-      nodesById[route[0]]
+    let totalDistance = calculateNetworkDistance(
+      depotId,
+      route[0]
     )
     
     for (let i = 0; i < route.length - 1; i++) {
-      totalDistance += calculateDistance(
-        nodesById[route[i]],
-        nodesById[route[i + 1]]
+      totalDistance += calculateNetworkDistance(
+        route[i],
+        route[i + 1]
       )
     }
     
-    totalDistance += calculateDistance(
-      nodesById[route[route.length - 1]],
-      nodesById[depotId]
+    totalDistance += calculateNetworkDistance(
+      route[route.length - 1],
+      depotId
     )
     
     return totalDistance

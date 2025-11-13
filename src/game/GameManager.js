@@ -1,15 +1,6 @@
 import tourSetup from '../data/tourSetup.json'
 import { calculateDistance } from '../algorithms/distance.js'
-import { nearestInsertion as nearestInsertionAlgorithm } from '../algorithms/nearestInsertion.js'
-import { twoOpt as twoOptAlgorithm } from '../algorithms/twoOpt.js'
 import { replaceBlockedEdges } from '../algorithms/pathfinding.js'
-
-/**
- * Re-export routing algorithms for backward compatibility.
- * These are now implemented in the algorithms/ folder.
- */
-export const nearestInsertion = nearestInsertionAlgorithm
-export const twoOpt = twoOptAlgorithm
 
 /**
  * Simulates a delivery tour and calculates performance metrics.
@@ -128,8 +119,8 @@ export function simulateRoute(edges, vehicle, tourData, baseline) {
       if (nodeData && nodeData.type === 'address' && !visited.includes(nodeAtPos)) {
         visited.push(nodeAtPos)
         
-        // Add 5 min stop time per address
-        timeMin += 5
+        // Add 8 min stop time per address
+        timeMin += 8
         
         // Deliveries after construction zones are late
         if (!blockedEdgeEncountered) {
@@ -183,14 +174,19 @@ export function simulateRoute(edges, vehicle, tourData, baseline) {
   const onTimeDeliveries = visitedOnTime.length
   let deliveryRate = (onTimeDeliveries / numberOfStops) * 100
   
-  // Can't exceed baseline rate (represents market conditions)
-  const baselineRate = baseline.deliveryRate * 100
-  deliveryRate = Math.min(deliveryRate, baselineRate)
-  
-  // Bonus for efficient routes (only if no construction delays)
-  const kmReduction = baseline.totalDistance - totalKm
-  if (kmReduction > 0 && !blockedEdgeEncountered) {
-    deliveryRate = Math.min(100, deliveryRate + (kmReduction * 0.5))
+  // If no construction zones encountered and all addresses visited, 100% delivery rate
+  if (!blockedEdgeEncountered && onTimeDeliveries === numberOfStops) {
+    deliveryRate = 100
+  } else {
+    // Otherwise cap at baseline rate (represents market conditions)
+    const baselineRate = baseline.deliveryRate * 100
+    deliveryRate = Math.min(deliveryRate, baselineRate)
+    
+    // Bonus for efficient routes (only if no construction delays)
+    const kmReduction = baseline.totalDistance - totalKm
+    if (kmReduction > 0 && !blockedEdgeEncountered) {
+      deliveryRate = Math.min(100, deliveryRate + (kmReduction * 0.5))
+    }
   }
   
   // Calculate efficiency metrics

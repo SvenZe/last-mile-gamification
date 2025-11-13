@@ -3,25 +3,21 @@ import tourSetup from './data/tourSetup.json'
 import baselineMetrics from './data/baselineMetrics.json'
 import { vehicles } from './data/vehicles.js'
 import MapView from './map/MapView.jsx'
-import { nearestInsertion, twoOpt, simulateRoute } from './game/GameManager.js'
+import { simulateRoute } from './game/GameManager.js'
+import { clarkeWrightSavings } from './algorithms/clarkeWright.js'
 import { findDetour } from './algorithms/pathfinding.js'
 import VehicleSelector from './components/VehicleSelector.jsx'
 import ModeSelector from './components/ModeSelector.jsx'
 import ESGDashboard from './components/ESGDashboard.jsx'
 
 /**
- * Main application component for the Last-Mile Gamification serious game.
+ * Last-Mile Delivery Route Optimization Game
  * 
- * This is a learning game about route planning in last-mile logistics.
- * Players can either plan routes manually by clicking on edges, or let
- * an algorithm do it automatically. The game evaluates routes based on
- * ESG criteria (Environment, Economy, Social).
+ * Educational game where players learn about efficient route planning.
+ * Two modes: manual planning (click edges) or automatic optimization.
+ * Routes are scored on distance, time, and delivery success rate.
  * 
- * Game phases:
- * - intro: Story introduction and baseline metrics
- * - select: Choose vehicle and planning mode (manual/auto)
- * - plan: Create the route (interactive or algorithmic)
- * - report: View results and ESG scores
+ * Phases: intro → vehicle selection → route planning → results
  */
 export default function App() {
   // Game phase control
@@ -38,6 +34,12 @@ export default function App() {
   const [currentEndNode, setCurrentEndNode] = useState(null)
   const [selectionMessage, setSelectionMessage] = useState(null)
   const [plannedRoute, setPlannedRoute] = useState([])  // The route player planned (may contain blocked edges)
+  
+  // Auto mode state
+  const [autoRouteGenerated, setAutoRouteGenerated] = useState(false)
+  const [autoGenerating, setAutoGenerating] = useState(false)
+  const [autoRouteEdges, setAutoRouteEdges] = useState([])
+  const [autoRouteError, setAutoRouteError] = useState(null)
   
   // Simulation results
   const [report, setReport] = useState(null)
@@ -241,53 +243,387 @@ export default function App() {
     setSelectionMessage(null)
   }
 
-  function runSimulation() {
-    const vehicle = vehicles.find(v => v.id === vehicleId)
-    if (!vehicle) { alert('Bitte Fahrzeug wählen.'); return }
-    let edgesForSim = []
-
-    if (mode === 'manual') {
-      edgesForSim = manualEdges
-    } else {
-      // Auto: Adresse-Reihenfolge mit Heuristik bestimmen
-      const seq = twoOpt(nearestInsertion(tourSetup))
-      edgesForSim = []
-      let last = depotId
+  async function generateAutoRoute() {
+    setAutoGenerating(true)
+    setAutoRouteError(null)
+    console.log('\n🚀 Generating optimal route...')
+    console.log('─'.repeat(50))
+    
+    try {
+      // Phase 1: Build initial route candidates
+      console.log('\n📊 Phase 1: Building initial candidates')
+      const startTime1 = performance.now()
       
-      seq.forEach(addrId => {
-        // Try to find a direct edge first
-        const directEdge = tourSetup.edges.find(ed =>
-          (ed.a === last && ed.b === addrId) || (ed.b === last && ed.a === addrId))
+      const candidates = []
+      
+      const allAddresses = tourSetup.nodes
+        .filter(n => n.type === 'address')
+        .map(n => n.id)
+      
+      // Import network distance calculator once at the top
+      const { calculateNetworkDistance } = await import('./algorithms/networkDistance.js')
+      const nodesById = {}
+      tourSetup.nodes.forEach(n => { nodesById[n.id] = n })
+      const depotId = tourSetup.nodes.find(n => n.type === 'depot').id
+      
+      // Strategy 1: Clarke-Wright heuristic
+      console.log('   • Clarke-Wright heuristic')
+      const cwSequence = clarkeWrightSavings(tourSetup)
+      candidates.push(cwSequence)
+      console.log(`      ✓ Generated Clarke-Wright sequence`)
+      
+      // Strategy 2: Nearest neighbor from each address
+      console.log('   • Nearest neighbor (18 variations)')
+      
+      for (const startAddr of allAddresses) {
+        const route = []
+        const remaining = allAddresses.filter(a => a !== startAddr)
+        route.push(startAddr)
         
-        if (directEdge) {
-          edgesForSim.push(directEdge)
-        } else {
-          // No direct edge - find path through junctions
-          const path = findDetour(last, addrId, new Set())
-          if (path && path.length > 0) {
-            edgesForSim.push(...path)
+        let current = startAddr
+        while (remaining.length > 0) {
+          // Find nearest unvisited address
+          let nearestDist = Infinity
+          let nearestAddr = null
+          for (const addr of remaining) {
+            const dist = calculateNetworkDistance(current, addr)
+            if (dist < nearestDist) {
+              nearestDist = dist
+              nearestAddr = addr
+            }
           }
+          route.push(nearestAddr)
+          remaining.splice(remaining.indexOf(nearestAddr), 1)
+          current = nearestAddr
         }
-        last = addrId
-      })
+        candidates.push(route)
+      }
+      console.log('     ✓ 18 sequences')
       
-      // Return to depot
-      const backEdge = tourSetup.edges.find(ed =>
-        (ed.a === last && ed.b === depotId) || (ed.b === last && ed.a === depotId))
-      if (backEdge) {
-        edgesForSim.push(backEdge)
+      // Strategy 3: Random sampling for diversity
+      console.log('   • Random sampling (2000 permutations)')
+      for (let i = 0; i < 2000; i++) {
+        const shuffled = [...allAddresses]
+        for (let j = shuffled.length - 1; j > 0; j--) {
+          const k = Math.floor(Math.random() * (j + 1))
+          ;[shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]]
+        }
+        candidates.push(shuffled)
+      }
+      console.log('     ✓ 2000 sequences')
+      
+      const time1 = performance.now() - startTime1
+      console.log(`   ✓ ${candidates.length} candidates in ${(time1/1000).toFixed(1)}s`)
+      
+      // Phase 2: Optimize with Lin-Kernighan-Helsgaun
+      console.log('\n🔥 Phase 2: Optimizing routes')
+      const startTime2 = performance.now()
+      
+      const optimizedCandidates = []
+      
+      // Helper to calculate network distance for a route (uses variables from Phase 1)
+      const calculateRouteDistance = (route) => {
+        let total = calculateNetworkDistance(depotId, route[0])
+        for (let i = 0; i < route.length - 1; i++) {
+          total += calculateNetworkDistance(route[i], route[i + 1])
+        }
+        total += calculateNetworkDistance(route[route.length - 1], depotId)
+        return total
+      }
+      
+      console.log(`   Running LKH algorithm on ${candidates.length} candidates...`)
+      
+      // Import LKH
+      const { linKernighanHelsgaun } = await import('./algorithms/linKernighanHelsgaun.js')
+      
+      // Track ALL optimized routes
+      const allRoutes = []
+      
+      for (let i = 0; i < candidates.length; i++) {
+        if (i % 200 === 0 || i === candidates.length - 1) {
+          console.log(`   → ${i + 1}/${candidates.length}`)
+        }
+        
+        let sequence = candidates[i]
+        
+        // Apply Lin-Kernighan-Helsgaun algorithm
+        // This is a variable-depth k-opt with candidate sets and don't-look bits
+        sequence = linKernighanHelsgaun(sequence, depotId)
+        
+        const dist = calculateRouteDistance(sequence)
+        allRoutes.push({ sequence: [...sequence], dist })
+        
+        // Additionally: Try with reversed initial tour (different starting topology)
+        const reversedSequence = [...candidates[i]].reverse()
+        const optimizedReversed = linKernighanHelsgaun(reversedSequence, depotId)
+        const distReversed = calculateRouteDistance(optimizedReversed)
+        allRoutes.push({ sequence: [...optimizedReversed], dist: distReversed })
+      }
+      
+      console.log(`   ✓ ${allRoutes.length} optimized routes`)
+      
+      // Select best route
+      allRoutes.sort((a, b) => a.dist - b.dist)
+      const absoluteBest = allRoutes[0]
+      
+      console.log(`   🏆 Best route: ${absoluteBest.dist.toFixed(2)} km`)
+      
+      const optimizedSequence = absoluteBest.sequence
+      const time2 = performance.now() - startTime2
+      console.log(`   Time: ${(time2/1000).toFixed(1)}s`)
+      
+      // Phase 3: Map route to actual edges
+      console.log('\n🗺️ Phase 3: Mapping to road network')
+      const edgesForRoute = []
+      let currentPos = depotId
+      
+      console.log(`   ${depotId} → ${optimizedSequence[0]}`)
+      
+      // Prüfe auch coincident nodes (überlappende Knoten) für Depot und Ziel
+      const depotCluster = getCluster(depotId)
+      const firstAddrCluster = getCluster(optimizedSequence[0])
+      
+      // Versuche direkte Edge zu finden (auch über coincident nodes)
+      let firstEdge = null
+      for (const depotNode of depotCluster) {
+        for (const targetNode of firstAddrCluster) {
+          firstEdge = tourSetup.edges.find(ed =>
+            (ed.a === depotNode && ed.b === targetNode) ||
+            (ed.b === depotNode && ed.a === targetNode)
+          )
+          if (firstEdge) break
+        }
+        if (firstEdge) break
+      }
+      
+      if (firstEdge) {
+        edgesForRoute.push(firstEdge)
+        currentPos = optimizedSequence[0]
+                console.log(`     ✓ Direct: ${firstEdge.id}`)
       } else {
-        const returnPath = findDetour(last, depotId, new Set())
-        if (returnPath && returnPath.length > 0) {
-          edgesForSim.push(...returnPath)
+        const depotJunction = depotCluster.find(id => nodesById[id]?.type === 'junction') || depotCluster[0]
+        const targetJunction = firstAddrCluster.find(id => nodesById[id]?.type === 'junction') || firstAddrCluster[0]
+        const path = findDetour(depotJunction, targetJunction, new Set())
+        if (path && path.length > 0) {
+          edgesForRoute.push(...path)
+          currentPos = optimizedSequence[0]
+          console.log(`     ✓ Via ${path.length} edges`)
+        } else {
+          console.error(`   ❌ No path found!`)
+          setAutoRouteError(`Keine Route vom Depot zur ersten Adresse ${optimizedSequence[0]}`)
+          setAutoGenerating(false)
+          return
         }
       }
       
-      setSelectedEdgeIds(edgesForSim.map(e => e.id))  // Array statt Set
+      // Zwischen allen Adressen
+      for (let i = 1; i < optimizedSequence.length; i++) {
+        const from = optimizedSequence[i - 1]
+        const to = optimizedSequence[i]
+        console.log(`   ${from} → ${to}`)
+        
+        // Prüfe auch coincident nodes
+        const fromCluster = getCluster(from)
+        const toCluster = getCluster(to)
+        
+        console.log(`   From Cluster: [${fromCluster.join(', ')}]`)
+        console.log(`   To Cluster: [${toCluster.join(', ')}]`)
+        
+        let directEdge = null
+        for (const fromNode of fromCluster) {
+          for (const toNode of toCluster) {
+            directEdge = tourSetup.edges.find(ed =>
+              (ed.a === fromNode && ed.b === toNode) ||
+              (ed.b === fromNode && ed.a === toNode)
+            )
+            if (directEdge) {
+              console.log(`   Gefunden: ${fromNode} ↔ ${toNode} via ${directEdge.id}`)
+              break
+            }
+          }
+          if (directEdge) break
+        }
+        
+        if (directEdge) {
+          edgesForRoute.push(directEdge)
+          currentPos = to
+          console.log(`   ✓ Direkte Edge: ${directEdge.id} (${(directEdge.lengthKm || 0).toFixed(2)} km)${directEdge.blocked ? ' [BAUSTELLE]' : ''}`)
+        } else {
+          console.log(`   ⚠️ Keine direkte Edge → Dijkstra-Pathfinding...`)
+          // Nutze Junction-Knoten für Pathfinding (nicht Adress-Knoten!)
+          const fromJunction = fromCluster.find(id => nodesById[id]?.type === 'junction') || fromCluster[0]
+          const toJunction = toCluster.find(id => nodesById[id]?.type === 'junction') || toCluster[0]
+          console.log(`   Pathfinding: ${fromJunction} → ${toJunction}`)
+          const path = findDetour(fromJunction, toJunction, new Set())
+          if (path && path.length > 0) {
+            edgesForRoute.push(...path)
+            currentPos = to
+            console.log(`     ✓ Via ${path.length} edges`)
+          } else {
+            console.error(`   ❌ No path: ${from} → ${to}`)
+          }
+        }
+      }
+      
+      console.log(`   ${currentPos} → ${depotId}`)
+      
+      const lastCluster = getCluster(currentPos)
+      const depotReturnCluster = getCluster(depotId)
+      
+      let returnEdge = null
+      for (const fromNode of lastCluster) {
+        for (const depotNode of depotReturnCluster) {
+          returnEdge = tourSetup.edges.find(ed =>
+            (ed.a === fromNode && ed.b === depotNode) ||
+            (ed.b === fromNode && ed.a === depotNode)
+          )
+          if (returnEdge) break
+        }
+        if (returnEdge) break
+      }
+      
+      if (returnEdge) {
+        edgesForRoute.push(returnEdge)
+                console.log(`     ✓ Direct: ${returnEdge.id}`)
+      } else {
+        console.log(`   ⚠️ Keine direkte Edge → Dijkstra-Pathfinding...`)
+        const fromJunction = lastCluster.find(id => nodesById[id]?.type === 'junction') || lastCluster[0]
+        const depotJunction = depotReturnCluster.find(id => nodesById[id]?.type === 'junction') || depotReturnCluster[0]
+        console.log(`   Pathfinding: ${fromJunction} → ${depotJunction}`)
+        const path = findDetour(fromJunction, depotJunction, new Set())
+        if (path && path.length > 0) {
+          edgesForRoute.push(...path)
+          const totalDist = path.reduce((sum, e) => sum + (e.lengthKm || 0), 0)
+          console.log(`   ✓ Umweg über ${path.length} Edges (${totalDist.toFixed(2)} km)`)
+          console.log(`   Path: ${path.map(e => e.id).join(' → ')}`)
+        } else {
+          console.error(`   ❌ FEHLER: Keine Rückroute zum Depot!`)
+        }
+      }
+      
+      // Phase 4: Track visited addresses
+      const visited = new Set(optimizedSequence)
+      console.log(`\n✓ Route visits ${visited.size} addresses`)
+      
+      // Remove duplicate edges
+      const uniqueEdges = []
+      const seenEdgeIds = new Set()
+      edgesForRoute.forEach(edge => {
+        if (!seenEdgeIds.has(edge.id)) {
+          seenEdgeIds.add(edge.id)
+          uniqueEdges.push(edge)
+        }
+      })
+      
+      console.log(`\n✓ Generated ${uniqueEdges.length} edge route`)
+      
+      let totalKm = 0
+      uniqueEdges.forEach(edge => {
+        const a = nodesById[edge.a]
+        const b = nodesById[edge.b]
+        if (a && b) {
+          const lengthKm = edge.lengthKm || (Math.hypot(b.x - a.x, b.y - a.y) * 0.01)
+          totalKm += lengthKm
+        }
+      })
+      
+      const stopTimeMin = visited.size * 8
+      const driveTimeMin = (totalKm / 30) * 60
+      const totalTimeMin = stopTimeMin + driveTimeMin
+      
+      const baselineKm = 27.00
+      const targetKm = 25.00
+      
+      console.log(`\n   Gesamtstrecke: ${totalKm.toFixed(2)} km`)
+      console.log(`   Baseline: ${baselineKm.toFixed(2)} km`)
+      console.log(`   Ziel: ≤ ${targetKm.toFixed(2)} km`)
+      
+      const improvement = baselineKm - totalKm
+      const improvementPct = (improvement / baselineKm * 100)
+      
+      if (totalKm <= targetKm) {
+        console.log(`   ✅ ZIEL ERREICHT! ${improvement.toFixed(2)} km besser als Baseline (${improvementPct.toFixed(1)}%)`)
+      } else {
+        console.log(`   ⚠️ Ziel nicht erreicht: ${(totalKm - targetKm).toFixed(2)} km über Ziel`)
+        console.log(`   📊 Verbesserung vs Baseline: ${improvement.toFixed(2)} km (${improvementPct.toFixed(1)}%)`)
+      }
+      console.log(`   Fahrzeit: ${driveTimeMin.toFixed(0)} min`)
+      console.log(`   Stopzeit: ${stopTimeMin} min (${visited.size} × 8 min)`)
+      console.log(`   Gesamtzeit: ${totalTimeMin.toFixed(0)} min`)
+      console.log(`   Total Edges: ${uniqueEdges.length}`)
+      
+      // PHASE 6: States setzen
+      console.log('\n💾 PHASE 6: STATES AKTUALISIEREN')
+      console.log('─────────────────────────────────────')
+      
+      const edgeIds = uniqueEdges.map(e => e.id)
+      console.log(`   Edge IDs für Karte: [${edgeIds.join(', ')}]`)
+      
+      setAutoRouteEdges(uniqueEdges)
+      setSelectedEdgeIds(edgeIds)
+      setVisitedAddresses(visited)
+      setCurrentEndNode(depotId)
+      setAutoRouteGenerated(true)
+      setAutoGenerating(false)
+      
+      console.log(`   ✓ ${uniqueEdges.length} Edges gespeichert`)
+      console.log(`   ✓ ${edgeIds.length} Edge IDs gesetzt`)
+      console.log(`   ✓ ${visited.size}/18 Adressen besucht`)
+      
+      if (visited.size < 18) {
+        const missing = 18 - visited.size
+        console.warn(`\n⚠️ WARNUNG: Nur ${visited.size}/18 Adressen (${missing} fehlen)`)
+        setAutoRouteError(`Achtung: ${missing} Adresse(n) nicht erreichbar.`)
+      }
+      
+      console.log('\n═══════════════════════════════════════')
+      console.log('✅ ROUTENGENERIERUNG ABGESCHLOSSEN')
+      console.log('═══════════════════════════════════════\n')
+      
+    } catch (error) {
+      console.error('\n❌ KRITISCHER FEHLER:', error)
+      setAutoRouteError('Unerwarteter Fehler bei der Routengenerierung.')
+      setAutoGenerating(false)
     }
+  }
 
+  function resetAutoRoute() {
+    setAutoRouteGenerated(false)
+    setAutoRouteEdges([])
+    setSelectedEdgeIds([])
+    setVisitedAddresses(new Set())
+    setCurrentEndNode(null)
+    setAutoRouteError(null)
+    console.log('🔄 Auto-Route zurückgesetzt')
+  }
+
+  function runSimulation() {
+    const vehicle = vehicles.find(v => v.id === vehicleId)
+    if (!vehicle) { 
+      alert('Bitte Fahrzeug wählen.')
+      return 
+    }
+    
+    let edgesForSim = []
+    
+    if (mode === 'manual') {
+      edgesForSim = manualEdges
+    } else if (mode === 'auto') {
+      if (!autoRouteGenerated) {
+        alert('Bitte zuerst Route generieren.')
+        return
+      }
+      edgesForSim = autoRouteEdges
+    }
+    
+    if (edgesForSim.length === 0) {
+      alert('Keine Route vorhanden.')
+      return
+    }
+    
+    console.log(`🚚 Starte Simulation mit ${edgesForSim.length} Edges (Modus: ${mode})`)
     const res = simulateRoute(edgesForSim, vehicle, tourSetup, baseline)
-    setPlannedRoute(edgesForSim)  // Save the planned route before simulation
+    setPlannedRoute(edgesForSim)
     setReport(res)
     setPhase('report')
   }
@@ -336,24 +672,22 @@ export default function App() {
             onClick={() => setPhase('plan')}
             disabled={!vehicleId || !mode}
           >
-            Weiter zur Planung
+            Zur Planung
           </button>
         </div>
       )}
 
-      {phase === 'plan' && (() => {
+      {phase === 'plan' && mode === 'manual' && (() => {
         const allAddressesVisited = visitedAddresses.size === 18
         const isBackAtDepot = currentEndNode
           ? getCluster(currentEndNode).some(id => startAnchorIds.includes(id))
           : false
-        const canStartSimulation = mode === 'auto' || (allAddressesVisited && isBackAtDepot)
+        const canStartSimulation = allAddressesVisited && isBackAtDepot
 
         return (
           <div className="panel">
-            <h2>Route planen ({mode === 'manual' ? 'manuell' : 'automatisch'})</h2>
-            <p>{mode === 'manual'
-              ? 'Klicken Sie Kanten nacheinander; die erste muss am Depot starten.'
-              : 'Automatische Tour wird im Hintergrund erzeugt.'}</p>
+            <h2>Route planen (manuell)</h2>
+            <p>Klicken Sie Kanten nacheinander; die erste muss am Depot starten.</p>
             
             {mode === 'manual' && (
               <>
@@ -396,7 +730,7 @@ export default function App() {
                     }
                   })
                   
-                  const totalTimeMin = (totalKm / 30) * 60 + (visitedAddresses.size * 5) // 30 km/h + 5 min pro Adresse
+                  const totalTimeMin = (totalKm / 30) * 60 + (visitedAddresses.size * 8) // 30 km/h + 8 min pro Adresse
                   const hours = Math.floor(totalTimeMin / 60)
                   const minutes = Math.round(totalTimeMin % 60)
                   
@@ -489,6 +823,156 @@ export default function App() {
                     Route zurücksetzen
                   </button>
                 </>
+              )}
+            </div>
+          </div>
+        )
+      })()}
+
+      {phase === 'plan' && mode === 'auto' && (() => {
+        return (
+          <div className="panel">
+            <h2>Route planen (automatisch)</h2>
+            <p>Klicken Sie auf "Route generieren", um die optimale Route mit der Routenplanungssoftware (Nearest Insertion + 2-Opt) zu berechnen.</p>
+            
+            {!autoRouteGenerated && !autoGenerating && (
+              <button 
+                className="button primary"
+                onClick={generateAutoRoute}
+                style={{ marginBottom: '16px' }}
+              >
+                🔄 Route generieren
+              </button>
+            )}
+            
+            {autoGenerating && (
+              <div style={{
+                padding: '16px',
+                background: '#eff6ff',
+                border: '2px solid #3b82f6',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e40af', marginBottom: '8px' }}>
+                  🔄 Berechne optimale Route...
+                </div>
+                <div style={{ fontSize: '13px', color: '#64748b' }}>
+                  Nearest Insertion + 2-Opt Optimierung läuft
+                </div>
+              </div>
+            )}
+            
+            {autoRouteError && (
+              <div style={{
+                padding: '12px',
+                background: '#fef2f2',
+                border: '2px solid #dc2626',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                color: '#991b1b'
+              }}>
+                ⚠️ {autoRouteError}
+              </div>
+            )}
+            
+            {autoRouteGenerated && (
+              <div style={{
+                padding: '12px',
+                marginBottom: '16px',
+                background: visitedAddresses.size === 18 ? '#d1fae5' : '#fef3c7',
+                border: `2px solid ${visitedAddresses.size === 18 ? '#10b981' : '#f59e0b'}`,
+                borderRadius: '8px'
+              }}>
+                <strong>Fortschritt:</strong>
+                <div style={{ marginTop: '8px' }}>
+                  📍 Besuchte Adressen: <strong>{visitedAddresses.size}/18</strong>
+                </div>
+                {visitedAddresses.size === 18 && (
+                  <div style={{ marginTop: '4px', color: '#059669' }}>
+                    ✓ Route vollständig - bereit für Simulation
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {autoRouteGenerated && autoRouteEdges.length > 0 && (() => {
+              let totalKm = 0
+              autoRouteEdges.forEach(edge => {
+                const a = nodesById[edge.a]
+                const b = nodesById[edge.b]
+                if (a && b) {
+                  const lengthKm = edge.lengthKm || (Math.hypot(b.x - a.x, b.y - a.y) * 0.01)
+                  totalKm += lengthKm
+                }
+              })
+              
+              const totalTimeMin = (totalKm / 30) * 60 + (visitedAddresses.size * 5)
+              const hours = Math.floor(totalTimeMin / 60)
+              const minutes = Math.round(totalTimeMin % 60)
+              
+              return (
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: '#eff6ff',
+                    border: '2px solid #3b82f6',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '13px', color: '#1e40af', marginBottom: '4px' }}>
+                      Gesamtstrecke
+                    </div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>
+                      {totalKm.toFixed(2)} km
+                    </div>
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: '#f0fdf4',
+                    border: '2px solid #10b981',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '13px', color: '#065f46', marginBottom: '4px' }}>
+                      Geschätzte Dauer
+                    </div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#065f46' }}>
+                      {hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+            
+            <MapView
+              tourData={tourSetup}
+              mode="view"
+              selectedEdgeIds={selectedEdgeIds}
+              visitedAddresses={new Set()}
+              currentNode={null}
+              onSelectEdge={() => {}}
+              detours={[]}
+            />
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button
+                className="button primary"
+                onClick={runSimulation}
+                disabled={!autoRouteGenerated || autoGenerating}
+              >
+                Simulation starten
+              </button>
+              
+              {autoRouteGenerated && (
+                <button
+                  className="button"
+                  onClick={resetAutoRoute}
+                >
+                  Route zurücksetzen
+                </button>
               )}
             </div>
           </div>

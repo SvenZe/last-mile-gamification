@@ -7,6 +7,7 @@
     "numberOfStops": 18,
     "costPerKm": 10.8,
     "costPerStop": 16.2,
-    "costPerSuccessfulDelivery": 19.11
+    "costPerSuccessfulDelivery": 19.11,
+    "_note": "Baseline represents manual planning. Target for automated planning: ≤25 km (3h work = half of 50km/6h shift)"
   }
 }
