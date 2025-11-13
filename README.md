@@ -26,10 +26,10 @@ Das Spiel simuliert einen typischen Tag in der Paketzustellung. 18 Kunden warten
 
 ### Spielablauf
 1. **Story**: Kurze Einführung ins Szenario – Baustellen in der Stadt, Zeitdruck, die üblichen Logistik-Probleme eben
-2. **Fahrzeugwahl**: Diesel-Transporter, E-Auto oder doch lieber Lastenrad?
+2. **Fahrzeugwahl**: Diesel-Transporter, Hybrid-Transporter oder Elektrotransporter?
 3. **Planungsmodus**:
    - **Manuell**: Du klickst dich durch die Straßen und baust deine Route Kante für Kante
-   - **Automatisch**: Lin-Kernighan-Helsgaun Algorithmus findet die optimale Route (21.85 km)
+   - **Automatisch**: Lin-Kernighan-Helsgaun Algorithmus findet die optimale Route
 4. **Simulation**: Deine Route wird durchgespielt – Kilometer, Kosten, CO₂, Zustellquote
 5. **Ergebnis**: ESG-Score zeigt, wie gut du warst (oder wie gut der Algorithmus war)
 
@@ -47,7 +47,7 @@ Das Spiel nutzt den **Lin-Kernighan-Helsgaun (LKH) Algorithmus** – einen der b
 ### Wie funktioniert's?
 1. **Initiale Lösungen**: Clarke-Wright Heuristic + 18 Nearest-Neighbor Varianten + 2000 zufällige Touren
 2. **Optimierung**: Variable k-opt Moves (2-opt bis 5-opt) mit Candidate Sets
-3. **Ergebnis**: Findet konsistent die optimale Route von 21.85 km (19% besser als manuelle Planung)
+3. **Ergebnis**: Findet konsistent die optimale Route
 
 Der Algorithmus arbeitet mit echten Straßendistanzen (Dijkstra-Pathfinding im Netzwerk) statt Luftlinie.
 
@@ -101,8 +101,8 @@ Das Projekt nutzt Hot Module Replacement – Änderungen im Code werden sofort s
 
 ## Lizenz & Verwendung
 
-Das Projekt ist für Lehrzwecke gedacht. Wer's im Unterricht einsetzen will: gerne! Feedback ist immer willkommen.
+Das Projekt ist für Lehrzwecke gedacht.
 
 ---
 
-_Hinweis: Das ist aktuell nur Lernstufe 3. Weitere Stufen mit zusätzlichen Herausforderungen sind geplant, aber noch nicht implementiert._
+_Hinweis: Das ist der Prototyp für die Lernstufe 3.
