@@ -107,27 +107,9 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
       })
     }
     
-    // PASS 4: Zeichne Hover-Highlights
-    if (mode === 'manual' && hoveredEdge) {
-      const e = tourData.edges.find(edge => edge.id === hoveredEdge)
-      if (e) {
-        const a = nodesById[e.a], b = nodesById[e.b]
-        if (a && b) {
-          const isSelected = selectedSet.has(e.id)
-          let roadWidth = isSelected ? 18 : 14
-          
-          ctx.beginPath()
-          ctx.moveTo(a.x, a.y)
-          ctx.lineTo(b.x, b.y)
-          ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)'
-          ctx.lineWidth = roadWidth + 6
-          ctx.lineCap = 'round'
-          ctx.stroke()
-        }
-      }
-    }
 
-    // Zeichne Kreuzungen und Markierungen
+    
+    // PASS 4: Zeichne Kreuzungen und Markierungen
     tourData.nodes.forEach(n => {
       if (n.type === 'depot') {
         const isCurrent = currentNode === n.id
@@ -149,14 +131,14 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
           }
         }
         
-        // Label
+        // Label - oberhalb des Gebäudes
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 11px sans-serif'
         ctx.textAlign = 'center'
         ctx.strokeStyle = isCurrent ? '#d97706' : '#1e40af'
         ctx.lineWidth = 3
-        ctx.strokeText('LAGER', n.x, n.y + 35)
-        ctx.fillText('LAGER', n.x, n.y + 35)
+        ctx.strokeText('LAGER', n.x, n.y - 28)
+        ctx.fillText('LAGER', n.x, n.y - 28)
         
       } else if (n.type === 'junction') {
         // Kreuzung als heller Kreis (wie Asphalt-Kreuzung)
@@ -210,6 +192,83 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
         ctx.fill()
       }
     })
+    
+    // PASS 5: Zeichne Hover-Highlights (nach Knoten, vor Text)
+    if (mode === 'manual' && hoveredEdge) {
+      const e = tourData.edges.find(edge => edge.id === hoveredEdge)
+      if (e) {
+        const a = nodesById[e.a], b = nodesById[e.b]
+        if (a && b) {
+          const isSelected = selectedSet.has(e.id)
+          let roadWidth = isSelected ? 18 : 14
+          
+          ctx.beginPath()
+          ctx.moveTo(a.x, a.y)
+          ctx.lineTo(b.x, b.y)
+          ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)'
+          ctx.lineWidth = roadWidth + 6
+          ctx.lineCap = 'round'
+          ctx.stroke()
+        }
+      }
+    }
+    
+    // PASS 6: Zeichne Kilometer und Fahrzeit auf Streckenabschnitte (ganz am Ende)
+    // Zeige Info nur für gehovererte oder ausgewählte Edges
+    if (mode === 'manual') {
+      tourData.edges.forEach(e => {
+        const a = nodesById[e.a], b = nodesById[e.b]
+        if (!a || !b) return
+        
+        const isHovered = hoveredEdge === e.id
+        
+        // Zeige Info nur beim Hovern
+        if (!isHovered) return
+        
+        // Berechne Edge-Länge in Pixeln
+        const edgeLengthPx = Math.hypot(b.x - a.x, b.y - a.y)
+        
+        // Überspringe sehr kurze Edges (unter 50 Pixel)
+        if (edgeLengthPx < 50) return
+        
+        // Mittelpunkt der Kante
+        const midX = (a.x + b.x) / 2
+        const midY = (a.y + b.y) / 2
+        
+        // Kilometer (aus edge.lengthKm oder berechnet)
+        const lengthKm = e.lengthKm || (edgeLengthPx * 0.01)
+        
+        // Fahrzeit in Minuten (bei 30 km/h)
+        const timeMin = (lengthKm / 30) * 60
+        
+        // Text-Hintergrund (halbtransparentes Rechteck)
+        const text = `${lengthKm.toFixed(2)} km • ~${Math.round(timeMin)} min`
+        
+        ctx.font = 'bold 13px sans-serif'
+        const textWidth = ctx.measureText(text).width
+        
+        // Bei horizontalen Kanten (dy klein) -> Text oberhalb
+        const dx = Math.abs(b.x - a.x)
+        const dy = Math.abs(b.y - a.y)
+        const isHorizontal = dx > dy * 2
+        const offsetY = isHorizontal ? -25 : 0
+        
+        // Hintergrund mit mehr Padding
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)'
+        ctx.fillRect(midX - textWidth / 2 - 6, midY + offsetY - 11, textWidth + 12, 22)
+        
+        // Rahmen - gelb für hover
+        ctx.strokeStyle = '#fbbf24'
+        ctx.lineWidth = 2
+        ctx.strokeRect(midX - textWidth / 2 - 6, midY + offsetY - 11, textWidth + 12, 22)
+        
+        // Text
+        ctx.fillStyle = '#ffffff'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(text, midX, midY + offsetY)
+      })
+    }
   }, [tourData, selectedEdgeIds, visitedAddresses, currentNode, hoveredEdge, mode, detours])
 
   function handleMouseMove(ev) {

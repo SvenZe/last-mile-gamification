@@ -1,33 +1,50 @@
-// src/game-logic/constants.js
+/**
+ * Game constants for last-mile delivery simulation.
+ * 
+ * These values define the operational parameters used across the game:
+ * - Company overhead costs (salaries, rent)
+ * - Fleet operations (working days, tours per day)
+ * - Route simulation (speed, stop times)
+ */
 
-// General game parameters
-export const STARTING_BUDGET = 75000;
-export const AVG_SPEED_KMPH = 30; // Average speed in kilometers per hour
-export const COST_PER_MINUTE_IDLE = 0.75; // Cost penalty for idling in traffic
+// Company-wide fixed overhead (allocated across all tours)
+export const FIXED_COST_PER_KM = 10.23  // €/km for salaries + rent
 
-// Vehicle data based on the concept document
+// Fleet and operations
+export const FLEET_SIZE = 8
+export const WORKING_DAYS_PER_YEAR = 250
+export const TOURS_PER_DAY = 12  // 5 morning shift + 7 afternoon shift
+export const TOTAL_FLEET_KM_PER_YEAR = 150000
+
+// Route simulation parameters
+export const CITY_SPEED_KMH = 30  // average urban driving speed
+export const STOP_TIME_MINUTES = 5  // time per address delivery
+export const CONSTRUCTION_DELAY_MINUTES = 15  // extra time for detours
+
+// Legacy vehicle data - kept for backwards compatibility
+// Note: Active vehicle specs are now in src/data/vehicles.js
 export const VEHICLES = {
   DIESEL: {
     id: 'diesel',
     name: 'Diesel Transporter',
-    initialCost: 0, // Baseline aquisition costs
-    co2PerKm: 198, // Realistic WLTP value
-    costPerKm: 0.14, // Calculated from fuel consumption: (8.0 l/100km * €1.75/l) / 100 km = €0.14 per km 
-    capacity: 11.0, // Cargo volume in cubic meters (m3)
+    initialCost: 0,
+    co2PerKm: 198,
+    costPerKm: 0.14,
+    capacity: 11.0,
   },
   HYBRID: {
     id: 'hybrid',
     name: 'Hybrid Transporter',
-    initialCost: 58000, // Baseline acquisition costs
-    co2PerKm: 127, // Official WLTP value
-    costPerKm: 0.12, // Calculated from fuel consumption ((2.5 l/100 km * € 1.75/l) + (25 kWh/100 km * €0.32/kWh)) / 100 km = €0.12 per km
-    capacity: 4.0, // Cargo volume in cubic meters (m3)
+    initialCost: 58000,
+    co2PerKm: 127,
+    costPerKm: 0.12,
+    capacity: 4.0,
   },
   ELECTRIC: {
     id: 'electric',
     name: 'E-Transporter',
-    initialCost: 65000, // Baseline acquisition costs
-    co2PerKm: 0, // No direct tailpipe emissions
+    initialCost: 65000,
+    co2PerKm: 0
     costPerKm: 0.09, // Calculated from electricity price and consumption: (30 kWh/100km * €0.32/kWh) / 100 km = €0.09 per km
     capacity: 11.0, // Cargo volume in cubic meters (m3)
   },
