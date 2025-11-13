@@ -356,29 +356,90 @@ export default function App() {
               : 'Automatische Tour wird im Hintergrund erzeugt.'}</p>
             
             {mode === 'manual' && (
-              <div style={{ 
-                padding: '12px', 
-                marginBottom: '16px', 
-                background: allAddressesVisited && isBackAtDepot ? '#d1fae5' : '#fef3c7',
-                border: `2px solid ${allAddressesVisited && isBackAtDepot ? '#10b981' : '#f59e0b'}`,
-                borderRadius: '8px'
-              }}>
-                <strong>Fortschritt:</strong>
-                <div style={{ marginTop: '8px' }}>
-                  📍 Besuchte Adressen: <strong>{visitedAddresses.size}/18</strong>
-                  {visitedAddresses.size < 18 && ' (noch nicht alle Adressen besucht)'}
+              <>
+                <div style={{ 
+                  padding: '12px', 
+                  marginBottom: '16px', 
+                  background: allAddressesVisited && isBackAtDepot ? '#d1fae5' : '#fef3c7',
+                  border: `2px solid ${allAddressesVisited && isBackAtDepot ? '#10b981' : '#f59e0b'}`,
+                  borderRadius: '8px'
+                }}>
+                  <strong>Fortschritt:</strong>
+                  <div style={{ marginTop: '8px' }}>
+                    📍 Besuchte Adressen: <strong>{visitedAddresses.size}/18</strong>
+                    {visitedAddresses.size < 18 && ' (noch nicht alle Adressen besucht)'}
+                  </div>
+                  {visitedAddresses.size === 18 && currentEndNode !== depotId && (
+                    <div style={{ marginTop: '4px', color: '#d97706' }}>
+                      ⚠️ Zurück zum Depot fahren erforderlich
+                    </div>
+                  )}
+                  {allAddressesVisited && isBackAtDepot && (
+                    <div style={{ marginTop: '4px', color: '#059669' }}>
+                      ✓ Route vollständig - bereit für Simulation
+                    </div>
+                  )}
                 </div>
-                {visitedAddresses.size === 18 && currentEndNode !== depotId && (
-                  <div style={{ marginTop: '4px', color: '#d97706' }}>
-                    ⚠️ Zurück zum Depot fahren erforderlich
-                  </div>
-                )}
-                {allAddressesVisited && isBackAtDepot && (
-                  <div style={{ marginTop: '4px', color: '#059669' }}>
-                    ✓ Route vollständig - bereit für Simulation
-                  </div>
-                )}
-              </div>
+                
+                {manualEdges.length > 0 && (() => {
+                  // Berechne Gesamtkilometer und Fahrzeit
+                  const nodesById = {}
+                  tourSetup.nodes.forEach(n => { nodesById[n.id] = n })
+                  
+                  let totalKm = 0
+                  manualEdges.forEach(edge => {
+                    const a = nodesById[edge.a]
+                    const b = nodesById[edge.b]
+                    if (a && b) {
+                      const lengthKm = edge.lengthKm || (Math.hypot(b.x - a.x, b.y - a.y) * 0.01)
+                      totalKm += lengthKm
+                    }
+                  })
+                  
+                  const totalTimeMin = (totalKm / 30) * 60 + (visitedAddresses.size * 5) // 30 km/h + 5 min pro Adresse
+                  const hours = Math.floor(totalTimeMin / 60)
+                  const minutes = Math.round(totalTimeMin % 60)
+                  
+                  return (
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '12px', 
+                      marginBottom: '16px' 
+                    }}>
+                      <div style={{ 
+                        flex: 1,
+                        padding: '12px', 
+                        background: '#eff6ff',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '8px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '13px', color: '#1e40af', marginBottom: '4px' }}>
+                          Gesamtstrecke
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>
+                          {totalKm.toFixed(2)} km
+                        </div>
+                      </div>
+                      <div style={{ 
+                        flex: 1,
+                        padding: '12px', 
+                        background: '#f0fdf4',
+                        border: '2px solid #10b981',
+                        borderRadius: '8px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '13px', color: '#065f46', marginBottom: '4px' }}>
+                          Geschätzte Dauer
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#065f46' }}>
+                          {hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </>
             )}
             
             <MapView

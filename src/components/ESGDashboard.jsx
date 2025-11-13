@@ -54,11 +54,32 @@ export default function ESGDashboard({ baseline, results }) {
       <div className="report-section">
         <h4>Ökonomie (35% Gewichtung)</h4>
         <div className="report-row">
-          <span>Gesamtkosten</span>
+          <span>Kosten pro km (Basis)</span>
+          <span>{f(results.costPerKmBasis, 2)} €/km</span>
+        </div>
+        <div className="report-row" style={{ paddingLeft: '20px', fontSize: '0.85em', color: '#94a3b8' }}>
+          <span>→ Fixkosten (Miete + Gehälter)</span>
+          <span>{f(results.fixedCostPerKm, 2)} €/km</span>
+        </div>
+        <div className="report-row" style={{ paddingLeft: '20px', fontSize: '0.85em', color: '#94a3b8' }}>
+          <span>→ Variable Kosten (Fahrzeug)</span>
+          <span>{f(results.variableCostPerKm, 2)} €/km</span>
+        </div>
+        
+        <div className="report-row" style={{ marginTop: '12px', fontWeight: 'bold' }}>
+          <span>Gesamtkosten Tour (kTour)</span>
           <span>
             {f(results.totalCost, 2)} €
             <DeltaIndicator value={results.costDelta} isImprovement={results.costDelta > 0} />
           </span>
+        </div>
+        <div className="report-row" style={{ paddingLeft: '20px', fontSize: '0.9em', color: '#64748b' }}>
+          <span>Fixkosten (kFix = {f(results.fixedCostPerKm, 2)} × {f(results.totalKm, 2)} km)</span>
+          <span>{f(results.kFix, 2)} €</span>
+        </div>
+        <div className="report-row" style={{ paddingLeft: '20px', fontSize: '0.9em', color: '#64748b' }}>
+          <span>Variable Kosten (kVar = {f(results.variableCostPerKm, 2)} × {f(results.totalKm, 2)} km)</span>
+          <span>{f(results.kVar, 2)} €</span>
         </div>
         <div className="report-row">
           <span>Baseline Kosten</span>
@@ -69,11 +90,11 @@ export default function ESGDashboard({ baseline, results }) {
           <span>{f(results.totalKm, 2)} km (Baseline: {baseline.totalDistance} km)</span>
         </div>
         <div className="report-row">
-          <span>Kosten / Stopp</span>
+          <span>Kosten / Stopp (kStopp)</span>
           <span>{f(results.costPerStop, 2)} €</span>
         </div>
         <div className="report-row">
-          <span>Kosten / erfolg. Zustellung</span>
+          <span>Kosten / erfolg. Zustellung (kErstversuch)</span>
           <span>{f(results.costPerSuccess, 2)} €</span>
         </div>
         <div className="report-row points">
