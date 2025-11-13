@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 
-export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddresses = new Set(), currentNode, onSelectEdge }) {
+export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddresses = new Set(), currentNode, onSelectEdge, detours = [] }) {
   const canvasRef = useRef(null)
   const [hoveredEdge, setHoveredEdge] = React.useState(null)
 
@@ -33,10 +33,11 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
       else if (isHovered && mode === 'manual') roadWidth = 16
       
       // Straßenuntergrund
+      // Im view-Modus (Report) werden Baustellen rot dargestellt
       ctx.beginPath()
       ctx.moveTo(a.x, a.y)
       ctx.lineTo(b.x, b.y)
-      ctx.strokeStyle = e.blocked ? '#7f1d1d' : '#ffffff'
+      ctx.strokeStyle = (mode === 'view' && e.blocked) ? '#7f1d1d' : '#ffffff'
       ctx.lineWidth = roadWidth
       ctx.lineCap = 'round'
       ctx.setLineDash([])
@@ -54,33 +55,62 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.lineTo(b.x, b.y)
-        ctx.strokeStyle = e.blocked ? '#f97316' : '#3b82f6'
+        ctx.strokeStyle = (mode === 'view' && e.blocked) ? '#f97316' : '#3b82f6'
         ctx.lineWidth = 4
         ctx.setLineDash([])
         ctx.stroke()
       }
     })
     
-    // PASS 3: Zeichne Baustellenmarkierungen
-    tourData.edges.forEach(e => {
-      if (!e.blocked) return
-      const a = nodesById[e.a], b = nodesById[e.b]
-      if (!a || !b) return
+    // PASS 3: Zeichne Baustellenmarkierungen (nur im view-Modus sichtbar)
+    if (mode === 'view') {
+      tourData.edges.forEach(e => {
+        if (!e.blocked) return
+        const a = nodesById[e.a], b = nodesById[e.b]
+        if (!a || !b) return
+        
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.strokeStyle = '#dc2626'
+        ctx.lineWidth = 3
+        ctx.setLineDash([10, 10])
+        ctx.stroke()
+        ctx.setLineDash([])
+      })
       
-      ctx.beginPath()
-      ctx.moveTo(a.x, a.y)
-      ctx.lineTo(b.x, b.y)
-      ctx.strokeStyle = '#dc2626'
-      ctx.lineWidth = 3
-      ctx.setLineDash([10, 10])
-      ctx.stroke()
-      ctx.setLineDash([])
-    })
+      // PASS 3b: Zeichne Umfahrungen in gelb
+      detours.forEach(detour => {
+        detour.detourEdges.forEach(edge => {
+          const a = nodesById[edge.a], b = nodesById[edge.b]
+          if (!a || !b) return
+          
+          // Gelber Untergrund für Umfahrung
+          ctx.beginPath()
+          ctx.moveTo(a.x, a.y)
+          ctx.lineTo(b.x, b.y)
+          ctx.strokeStyle = '#fbbf24'
+          ctx.lineWidth = 18
+          ctx.lineCap = 'round'
+          ctx.setLineDash([])
+          ctx.stroke()
+          
+          // Gelbe Mittellinie
+          ctx.beginPath()
+          ctx.moveTo(a.x, a.y)
+          ctx.lineTo(b.x, b.y)
+          ctx.strokeStyle = '#f59e0b'
+          ctx.lineWidth = 4
+          ctx.setLineDash([])
+          ctx.stroke()
+        })
+      })
+    }
     
     // PASS 4: Zeichne Hover-Highlights
     if (mode === 'manual' && hoveredEdge) {
       const e = tourData.edges.find(edge => edge.id === hoveredEdge)
-      if (e && !e.blocked) {
+      if (e) {
         const a = nodesById[e.a], b = nodesById[e.b]
         if (a && b) {
           const isSelected = selectedSet.has(e.id)
@@ -180,7 +210,7 @@ export default function MapView({ tourData, mode, selectedEdgeIds, visitedAddres
         ctx.fill()
       }
     })
-  }, [tourData, selectedEdgeIds, visitedAddresses, currentNode, hoveredEdge])
+  }, [tourData, selectedEdgeIds, visitedAddresses, currentNode, hoveredEdge, mode, detours])
 
   function handleMouseMove(ev) {
     if (mode !== 'manual') return
