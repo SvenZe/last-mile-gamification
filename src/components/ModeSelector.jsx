@@ -1,6 +1,12 @@
+/**
+ * ModeSelector.jsx
+ * Lets the player choose between manual and automatic route planning.
+ */
+
 import React from 'react'
 
 export default function ModeSelector({ value, onChange }) {
+  // Define available planning modes with their descriptions
   const modes = [
     {
       id: 'manual',
@@ -16,6 +22,7 @@ export default function ModeSelector({ value, onChange }) {
 
   return (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      {/* Render each mode as a selectable card */}
       {modes.map(mode => (
         <button
           key={mode.id}

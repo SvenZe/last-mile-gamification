@@ -1,17 +1,13 @@
-import tourSetup from '../data/tourSetup.json'
-
 /**
- * Calculates the distance between two nodes in kilometers.
- * Uses the canvas scale factor to convert pixel distance to real-world distance.
- * 
- * @param {Object} nodeA - First node with x,y coordinates
- * @param {Object} nodeB - Second node with x,y coordinates
- * @returns {number} Distance in kilometers
+ * distance.js
+ * Simple distance calculations using the canvas scale factor.
  */
+
+import tourSetup from '../data/tourSetup.json'
+import { euclideanDistance } from '../utils/mathHelpers.js'
+
 export function calculateDistance(nodeA, nodeB) {
-  const dx = nodeA.x - nodeB.x
-  const dy = nodeA.y - nodeB.y
-  const pixelDistance = Math.hypot(dx, dy)
+  const pixelDistance = euclideanDistance(nodeA.x, nodeA.y, nodeB.x, nodeB.y)
   
   return pixelDistance / tourSetup.canvas.scalePxPerKm
 }

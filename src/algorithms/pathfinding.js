@@ -1,27 +1,19 @@
 import tourSetup from '../data/tourSetup.json'
 
 /**
- * Finds an alternative route between two nodes while avoiding blocked edges.
+ * pathfinding.js
  * 
- * This uses Dijkstra's shortest path algorithm to calculate a detour when
- * a direct connection is blocked (e.g., due to construction work). The algorithm
- * ensures that the alternative route doesn't pass through any construction zones.
- * 
- * @param {string} startNodeId - ID of the starting node
- * @param {string} endNodeId - ID of the destination node  
- * @param {Set<string>} blockedEdgeIds - Set of specific edge IDs to exclude from the path
- * @returns {Array<Object>} List of edges forming the detour, or null if no path exists
+ * Finds detours around construction zones using Dijkstra's algorithm.
+ * When the player's route hits a blocked road, we calculate an alternate
+ * path that avoids all blocked edges.
  */
+
 export function findDetour(startNodeId, endNodeId, blockedEdgeIds = new Set()) {
-  // Build a graph representation excluding construction zones
   const graph = new Map()
   const edgeMap = new Map()
   
   tourSetup.edges.forEach(edge => {
-    // Skip edges that are explicitly blocked for this detour calculation
     if (blockedEdgeIds.has(edge.id)) return
-    
-    // Also skip edges that are construction zones - we can't use those for detours
     if (edge.blocked) return
     
     if (!graph.has(edge.a)) graph.set(edge.a, [])
@@ -34,12 +26,10 @@ export function findDetour(startNodeId, endNodeId, blockedEdgeIds = new Set()) {
     edgeMap.set(`${edge.b}-${edge.a}`, edge)
   })
   
-  // Run Dijkstra's shortest path algorithm
   const distances = new Map()
   const previous = new Map()
   const unvisited = new Set()
   
-  // Initialize all nodes with infinite distance except the start
   tourSetup.nodes.forEach(node => {
     distances.set(node.id, Infinity)
     unvisited.add(node.id)
@@ -47,7 +37,6 @@ export function findDetour(startNodeId, endNodeId, blockedEdgeIds = new Set()) {
   distances.set(startNodeId, 0)
   
   while (unvisited.size > 0) {
-    // Pick the unvisited node with smallest distance
     let current = null
     let minDist = Infinity
     for (const nodeId of unvisited) {
@@ -126,7 +115,6 @@ export function replaceBlockedEdges(edges, tourData) {
       // First edge doesn't connect to depot - start from edge.a
       currentNode = firstEdge.a
       if (import.meta.env.DEV) {
-        console.log(`Route starts from ${currentNode} instead of depot ${depotId}`)
       }
     }
   }
@@ -134,7 +122,6 @@ export function replaceBlockedEdges(edges, tourData) {
   // Development logging to help debug routing issues
   if (import.meta.env.DEV) {
     const blockedCount = edges.filter(e => e.blocked).length
-    console.log(`Analyzing route: ${edges.length} edges, ${blockedCount} construction zones, starting from ${currentNode}`)
   }
   
   for (let i = 0; i < edges.length; i++) {
@@ -150,7 +137,6 @@ export function replaceBlockedEdges(edges, tourData) {
       // Edge doesn't connect to where we are - route is broken!
       // Try to find a path to connect to this edge
       if (import.meta.env.DEV) {
-        console.warn(`Edge ${edge.id} doesn't connect to current position ${currentNode}. Trying to bridge gap...`)
       }
       
       // Try to find a path from currentNode to either edge.a or edge.b
@@ -173,7 +159,6 @@ export function replaceBlockedEdges(edges, tourData) {
       } else {
         // No path found - skip this edge entirely
         if (import.meta.env.DEV) {
-          console.error(`Cannot reach edge ${edge.id} from ${currentNode}`)
         }
         continue
       }
