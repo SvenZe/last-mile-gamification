@@ -231,7 +231,7 @@ Diese Einschränkungen sind didaktisch gewollt. Der Prototyp soll algorithmische
 
 ## Lizenz
 
-Dieser Code wurde im Rahmen meiner Masterarbeit an der TH Augsburg entwickelt und steht für akademische und Bildungszwecke zur Verfügung. Eine kommerzielle Nutzung ist ausgeschlossen. Bei Fragen zur Nutzung oder Integration in eigene Projekte gerne melden.
+Dieser Code wurde im Rahmen meiner Masterarbeit an der TH Augsburg entwickelt und steht für akademische und Bildungszwecke zur Verfügung. Eine kommerzielle Nutzung ist nicht gestattet. Bei Fragen zur Nutzung oder Integration in eigene Projekte gerne melden.
 
 ---
 
