@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Erzeugt src/data/tourSetup.json mit:
+ * Generates src/data/tourSetup.json with:
  * - 1 Depot (N00)
- * - 18 Adressen (07–10 Uhr)
+ * - 18 Addresses (07:00-10:00)
  * - 50 Mid-Nodes
- * - Junctions an "lock"-Punkten (mind. Grad 3)
- * - 4 gesperrte Kanten (blocked=true)
- * - Längen: km (px / SCALE_PX_PER_KM)
+ * - Junctions at "lock" points (at least degree 3)
+ * - 4 blocked edges (blocked=true)
+ * - Lengths: km (px / SCALE_PX_PER_KM)
  *
- * Aufruf:  npm run build:tour
+ * Run: npm run build:tour
  */
 
 const fs = require("fs");
@@ -46,8 +46,8 @@ const newAddrId = () => `A${String(++aid).padStart(2, "0")}`;
 const newJuncId = () => `J${String(++jid).padStart(2, "0")}`;
 const newMidId  = () => `M${String(++mid).padStart(2, "0")}`;
 
-// ---------------- Polylinien (Straßen-Skelett) ----------------
-// lock:true => expliziter gemeinsamer Knoten (Junction). Sonst: Mid.
+// ---------------- Polylines (Street Skeleton) ----------------
+// lock:true => explicit shared node (Junction). Otherwise: Mid.
 function P(points) { return points.map(p => ({...p, lock: !!p.lock})); }
 
 // East–West
@@ -66,7 +66,7 @@ const polylines = [EW1, EW2, EW3, NS1, NS2, NS3, DG1, DG2];
 
 // ---------------- Nodes & Depot ----------------
 const nodes = [];
-const nodeByKey = new Map(); // für lock: gleiche Koordinate -> gleicher Junction-Node
+const nodeByKey = new Map(); // for lock: same coordinate -> same Junction node
 
 function addNode(type, x, y, label) {
   let id;
@@ -107,7 +107,7 @@ function bakePolyline(poly) {
 }
 const streetNodes = polylines.map(bakePolyline);
 
-// ---------------- zusätzliche Mid-Nodes auf Segmenten ----------------
+// ---------------- Additional Mid-Nodes on Segments ----------------
 function addExtraMids(targetCount) {
   const countMid = () => nodes.filter(n => n.type === "mid").length;
   while (countMid() < targetCount) {
@@ -120,7 +120,7 @@ function addExtraMids(targetCount) {
     const x = jitter(a.x + t*(b.x - a.x), 4);
     const y = jitter(a.y + t*(b.y - a.y), 4);
     const m = addNode("mid", x, y);
-    line.splice(si+1, 0, m); // sauber in Linie einfügen
+    line.splice(si+1, 0, m); // insert cleanly in line
   }
 }
 addExtraMids(NUM_MIDS);

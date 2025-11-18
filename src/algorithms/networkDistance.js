@@ -1,20 +1,16 @@
+/**
+ * networkDistance.js
+ * 
+ * Calculates actual driving distances through the road network using Dijkstra.
+ * This is way more accurate than straight-line distance, especially in cities
+ * with one-way streets and construction zones.
+ */
+
 import tourSetup from '../data/tourSetup.json'
 import { findDetour } from './pathfinding.js'
 
-/**
- * Calculate actual network distance between two nodes using the street network.
- * 
- * This is critical for route optimization! Euclidean distance can be very
- * misleading - two addresses that are close "as the crow flies" might require
- * a long detour through the street network.
- * 
- * The optimizer should minimize the ACTUAL driving distance, not air distance.
- */
-
-// Cache for network distances to avoid recomputing
 const distanceCache = new Map()
 
-// Build lookup tables
 const nodesById = {}
 tourSetup.nodes.forEach(n => { nodesById[n.id] = n })
 
@@ -26,9 +22,6 @@ tourSetup.edges.forEach(edge => {
   edgesByNode.get(edge.b).push(edge)
 })
 
-/**
- * Get cluster of coincident nodes (nodes at same coordinates)
- */
 function getCluster(nodeId) {
   const node = nodesById[nodeId]
   if (!node) return [nodeId]
@@ -38,15 +31,8 @@ function getCluster(nodeId) {
     .map(n => n.id)
 }
 
-/**
- * Calculate actual driving distance between two nodes through the road network.
- * This uses Dijkstra's algorithm to find the shortest path, respecting blocked
- * roads and junction routing. Results are cached to speed up repeated lookups.
- * 
- * @param {string} fromId - Start node
- * @param {string} toId - End node  
- * @returns {number} Distance in km, or Infinity if unreachable
- */
+// Run Dijkstra to find shortest path through the road network.
+// Much more accurate than straight-line distance.
 export function calculateNetworkDistance(fromId, toId) {
   // Check cache first
   const cacheKey1 = `${fromId}-${toId}`
@@ -98,7 +84,7 @@ export function calculateNetworkDistance(fromId, toId) {
   const fromNode = nodesById[fromId]
   const toNode = nodesById[toId]
   if (fromNode && toNode) {
-    const euclidean = Math.hypot(toNode.x - fromNode.x, toNode.y - fromNode.y) / tourSetup.canvas.scalePxPerKm
+    const euclidean = euclideanDistance(fromNode.x, fromNode.y, toNode.x, toNode.y) / tourSetup.canvas.scalePxPerKm
     distanceCache.set(cacheKey1, euclidean)
     distanceCache.set(cacheKey2, euclidean)
     return euclidean

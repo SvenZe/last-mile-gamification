@@ -1,8 +1,17 @@
+/**
+ * ESGDashboard.jsx
+ * Shows the results after simulation: costs, emissions, delivery performance.
+ * Compares against baseline and calculates ESG score.
+ */
+
 import React from 'react'
+import { minutesToHoursAndMinutes } from '../utils/mathHelpers.js'
 
 const f = (n, d=2) => n.toFixed(d)
 
+// Shows improvement indicator with up/down arrows
 function DeltaIndicator({ value, isImprovement }) {
+  // Neutral arrow if change is negligible
   if (Math.abs(value) < 0.01) {
     return <span className="delta neutral">→</span>
   }
@@ -14,6 +23,7 @@ function DeltaIndicator({ value, isImprovement }) {
 }
 
 export default function ESGDashboard({ baseline, results }) {
+  // Calculate baseline percentage for display
   const baselinePct = baseline.deliveryRate * 100
   
   return (
@@ -22,11 +32,11 @@ export default function ESGDashboard({ baseline, results }) {
       
       {results.passed ? (
         <div className="success-message">
-          ✓ Lernstufe erfolgreich abgeschlossen! ESG-Score: {f(results.esgScore, 1)} Punkte
+          Lernstufe erfolgreich abgeschlossen! ESG-Score: {f(results.esgScore, 1)} Punkte
         </div>
       ) : (
         <div className="warning-message">
-          ⚠ Keine Verbesserung erzielt. ESG-Score: {f(results.esgScore, 1)} Punkte
+          Keine Verbesserung erzielt. ESG-Score: {f(results.esgScore, 1)} Punkte
         </div>
       )}
 
@@ -108,6 +118,10 @@ export default function ESGDashboard({ baseline, results }) {
       <div className="report-section">
         <h4>Soziales (25% Gewichtung)</h4>
         <div className="report-row">
+          <span>Pünktliche Zustellungen</span>
+          <span>{results.onTimeDeliveries} / {results.numberOfStops}</span>
+        </div>
+        <div className="report-row">
           <span>Zustellquote</span>
           <span>
             {f(results.deliveryRate, 1)}%
@@ -122,9 +136,16 @@ export default function ESGDashboard({ baseline, results }) {
           <span>Anzahl Stopps</span>
           <span>{results.numberOfStops}</span>
         </div>
+        <div className="report-row">
+          <span>Gesamtzeit (Fahrt + Stopps)</span>
+          <span>{(() => {
+            const { hours, minutes } = minutesToHoursAndMinutes(results.totalTime)
+            return `${hours}h ${minutes}min`
+          })()}</span>
+        </div>
         {results.constructionDelays > 0 && (
           <div className="report-row warning">
-            <span>⚠ Baustellen durchfahren</span>
+            <span>Baustellen durchfahren</span>
             <span>{results.constructionDelays}</span>
           </div>
         )}
@@ -148,12 +169,12 @@ export default function ESGDashboard({ baseline, results }) {
       <div className="report-info">
         <p>
           {results.passed 
-            ? 'Glückwunsch! Sie haben die Ausgangswerte verbessert und die Lernstufe erfolgreich abgeschlossen.'
-            : 'Die Gesamtbilanz ist nicht positiv. Versuchen Sie eine andere Strategie oder Fahrzeugwahl.'}
+            ? 'Sie haben die Ausgangswerte verbessert und die Lernstufe erfolgreich abgeschlossen.'
+            : 'Die Gesamtbilanz ist noch nicht positiv. Versuchen Sie eine andere Strategie oder Fahrzeugwahl.'}
         </p>
         {results.constructionDelays > 0 && (
           <p className="tip">
-            💡 Tipp: Mit der Routenplanungssoftware können Baustellen automatisch umfahren werden.
+            Hinweis: Mit der Routenplanungssoftware können Baustellen automatisch umfahren werden.
           </p>
         )}
       </div>

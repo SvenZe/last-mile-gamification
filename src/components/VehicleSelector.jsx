@@ -1,8 +1,14 @@
+/**
+ * VehicleSelector.jsx
+ * Shows the three vehicle options with their specs and costs.
+ */
+
 import React from 'react'
 
 export default function VehicleSelector({ vehicles, value, onChange }) {
   return (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+      {/* Display each vehicle as a selectable card */}
       {vehicles.map(v => (
         <button
           key={v.id}
@@ -20,10 +26,12 @@ export default function VehicleSelector({ vehicles, value, onChange }) {
           }}
           onClick={() => onChange(v.id)}
         >
+          {/* Vehicle name header */}
           <div style={{ fontWeight: 'bold', marginBottom: '10px', fontSize: '16px', color: '#0f172a' }}>
             {v.name}
           </div>
           
+          {/* Annual fixed costs section */}
           <div style={{ 
             fontSize: '14px', 
             lineHeight: '1.8', 
@@ -37,6 +45,7 @@ export default function VehicleSelector({ vehicles, value, onChange }) {
             <div><strong>Steuern pro Jahr:</strong> {v.taxPerYear.toLocaleString('de-DE')} €</div>
           </div>
           
+          {/* Fuel/energy consumption details */}
           <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#475569', marginBottom: '10px' }}>
             {v.fuelConsumption && (
               <div>

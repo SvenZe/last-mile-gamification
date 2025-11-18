@@ -1,25 +1,18 @@
 import { calculateNetworkDistance } from './networkDistance.js'
 
 /**
- * Lin-Kernighan-Helsgaun algorithm for the Traveling Salesman Problem.
- * This is one of the best TSP heuristics out there - it reliably finds optimal
- * or near-optimal solutions for problems up to 1000+ nodes.
+ * linKernighanHelsgaun.js
  * 
- * The algorithm works by trying variable-depth edge exchanges (2-opt, 3-opt, etc.)
- * but focuses on promising candidates rather than testing everything. This makes
- * it much faster than exhaustive search while still finding excellent solutions.
+ * LKH is one of the best TSP solvers out there. It tries edge swaps of
+ * different sizes (2-opt, 3-opt, etc.) but uses candidate sets to avoid
+ * checking every possible swap. This makes it fast enough for real-time
+ * use while still finding near-optimal solutions.
  * 
- * For our 18-address problem, it consistently finds the best possible route.
+ * For our 18-address problem, it consistently finds the optimal or very
+ * close to optimal route.
  */
 
-/**
- * Optimize a tour using LKH.
- * @param {Array<string>} initialTour - Starting tour (just the address IDs)
- * @param {string} depotId - ID of the depot node
- * @returns {Array<string>} Improved tour
- */
 export function linKernighanHelsgaun(initialTour, depotId) {
-  // Build candidate sets for each node (nearest neighbors)
   const candidateSets = buildCandidateSets(initialTour, depotId, 10)
   
   let tour = [...initialTour]
@@ -27,14 +20,14 @@ export function linKernighanHelsgaun(initialTour, depotId) {
   let iteration = 0
   const maxIterations = 100
   
-  // Don't-look bits: track which edges are unlikely to improve
+  // Don't-look bits: skip edges that are unlikely to improve
   const dontLook = new Set()
   
   while (improved && iteration < maxIterations) {
     improved = false
     iteration++
     
-    // Try to improve tour starting from each node
+    // Try improving from each position in the tour
     for (let i = 0; i < tour.length; i++) {
       const t1 = tour[i]
       
@@ -58,16 +51,13 @@ export function linKernighanHelsgaun(initialTour, depotId) {
   return tour
 }
 
-/**
- * Build a candidate set for each node - basically a list of its k nearest neighbors.
- * This lets us focus on promising edge swaps instead of trying every possible combination.
- */
+// Build candidate sets: for each node, find its k nearest neighbors.
+// This way we only try swaps that might actually help.
 function buildCandidateSets(tour, depotId, k = 10) {
   const allNodes = [depotId, ...tour]
   const candidateSets = {}
   
   for (const node of allNodes) {
-    // Calculate distances to all other nodes
     const distances = []
     for (const other of allNodes) {
       if (node !== other) {
@@ -76,7 +66,6 @@ function buildCandidateSets(tour, depotId, k = 10) {
       }
     }
     
-    // Sort by distance and take k nearest
     distances.sort((a, b) => a.dist - b.dist)
     candidateSets[node] = distances.slice(0, k).map(d => d.node)
   }
@@ -84,25 +73,20 @@ function buildCandidateSets(tour, depotId, k = 10) {
   return candidateSets
 }
 
-/**
- * Try to improve the tour by swapping edges starting from a given position.
- * We try 2-opt first, then extend to 3-opt, 4-opt etc if it helps.
- */
+// Try swapping edges starting from a given position.
+// Start with 2-opt and extend if we find an improvement.
 function linKernighanMove(tour, startIdx, candidateSets, depotId) {
   const n = tour.length
   
-  // Current edge to break: (t1, t2)
   const t1 = tour[startIdx]
   const t2 = tour[(startIdx + 1) % n]
   
   const t1Prev = startIdx === 0 ? depotId : tour[startIdx - 1]
   const currentEdgeBreak = calculateNetworkDistance(t1, t2)
   
-  // Try to reconnect t1 to a candidate node t3
   for (const t3 of candidateSets[t1]) {
     if (t3 === t2 || t3 === t1Prev) continue
     
-    // Calculate gain from this 2-opt move
     const newEdgeAdd = calculateNetworkDistance(t1, t3)
     const gain = currentEdgeBreak - newEdgeAdd
     
